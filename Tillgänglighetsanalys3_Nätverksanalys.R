@@ -23,7 +23,6 @@ ggplot()+
   geom_sf(data = st_as_sf(net_falun_lines, "edges"), color = "red")
 
 # nvdb med split
-
 nodes_parts = as_sfnetwork(sf_falun_nvdb_parts) %>%
   activate("nodes") %>%
   st_as_sf()
@@ -34,17 +33,78 @@ edges_parts = as_sfnetwork(sf_falun_nvdb_parts) %>%
 st_geometry(edges_parts) = NULL
 
 
-net_falun_parts  <- as_sfnetwork(sf_falun_nvdb_parts, directed = FALSE)
-net_falun_parts_lines  <- sfnetwork(nodes = nodes_parts, edges= edges_parts, directed = FALSE, edges_as_lines = TRUE)
-
-plot(net_falun_parts)
-plot(net_falun_parts_lines, add=TRUE, col="red")
-
-
-### visualisera traversering av graf
-net <- as_sfnetwork(sf_falun_lm, directed=FALSE) %>%
+net_falun_parts  <- as_sfnetwork(sf_falun_nvdb_parts, directed = FALSE) %>%
   activate("nodes") %>%
-  mutate(nodeId = as.integer(V(net))) %>%
+  mutate(nodeId = row_number()) %>%
+  mutate(xNode = st_coordinates(geometry)[,1], yNode = st_coordinates(geometry)[,2])%>%
+  activate("edges") %>%
+  mutate(weight = edge_length()) %>%
+  mutate(edgeId = paste0(from, "-", to))%>%
+  mutate(xEdge = st_coordinates(st_centroid(geometry))[,1], yEdge = st_coordinates(st_centroid(geometry))[,2])
+
+#### utvärdera net_falun mot net_falun_parts
+
+
+ggplot()+
+  geom_sf(data = st_as_sf(net_falun, "nodes"), color="green", size=3)+
+  geom_sf(data = st_as_sf(net_falun_parts, "nodes"), color=  "blue")+
+  geom_sf(data = st_as_sf(net_falun_parts, "edges"), color = "red", linetype="dashed")+
+  geom_sf(data = st_as_sf(net_falun_parts_lines, "edges"), color = "red")
+
+ggplot()+
+  geom_sf(data = st_as_sf(net_falun, "nodes"), color="green", size=3)+
+  geom_sf(data = st_as_sf(net_falun_parts, "nodes"), color=  "blue")+
+  geom_sf(data = st_as_sf(net_falun_parts, "edges"), color = "red")+
+  geom_text_repel(data = st_as_sf(net_falun_parts, "edges"), aes(label = edgeId, x = xEdge, y = yEdge), color = "blue", size=4)  +
+  geom_text_repel(data = st_as_sf(net_falun_parts, "nodes"), aes(label = nodeId, x = xNode, y = yNode), color = "red", size=4)  
+
+
+#### Distansanalys med Dijkstra
+
+distances(graph = net_falun_parts,v=1, mode="out")
+
+# PROBLEM: en massa noder går inte att nå!!
+
+#### Breath-first search Distansanalys net_falun_parts 
+result <- NULL
+f <- function(graph, data, extra) {
+  print(data)
+  x <- data.frame(nodeId = data["vid"]+1, dist = data["dist"])
+  result <<- rbind(result,x)
+  data['rank'] == 10 # begränsa sökning i djup
+}
+tmp <- bfs(net, root=1, "all", callback=f, unreachable=FALSE)
+result %>% arrange(dist)
+
+
+
+
+############################## Blandad skrutt --> ta bort detta senare
+
+nodes <- as_sfnetwork(sf_falun_nvdb_parts) %>% 
+  st_as_sf("nodes") %>% 
+  mutate(nodeId = row_number()) %>%
+  mutate(name = nodeId) %>%
+  mutate(xNode = st_coordinates(geometry)[,1], yNode = st_coordinates(geometry)[,2])
+
+edges <- as_sfnetwork(sf_falun_nvdb_parts) %>% 
+  st_as_sf("edges") %>% 
+  mutate(edgeId = paste0(from, "-", to))%>%
+  mutate(xEdge = st_coordinates(st_centroid(geometry))[,1], yEdge = st_coordinates(st_centroid(geometry))[,2])%>%
+  mutate(name = edgeId) 
+
+#net_falun_parts2  <- sfnetwork(nodes, edges, directed = FALSE)
+
+plot(net_falun_parts2)
+ggplot()+
+  geom_sf(data = st_as_sf(net_falun_parts2, "nodes"), color="red", size=2)+
+  geom_sf(data = st_as_sf(net_falun_parts2, "edges"), color = "blue")+
+  geom_text_repel(data = st_as_sf(net_falun_parts2, "edges"), aes(label = paste0(to, "-", from), x = xEdge, y = yEdge), color = "blue", size=4)  +
+  geom_text_repel(data = st_as_sf(net_falun_parts2, "nodes"), aes(label = nodeId, x = xNode, y = yNode), color = "red", size=4)  
+
+
+activate("nodes") %>%
+  mutate(nodeId = row_number()) %>%
   mutate(xNode = st_coordinates(geometry)[,1], yNode = st_coordinates(geometry)[,2])%>%
   activate("edges") %>%
   mutate(weight = edge_length()) %>%
@@ -52,30 +112,30 @@ net <- as_sfnetwork(sf_falun_lm, directed=FALSE) %>%
   mutate(xEdge = st_coordinates(st_centroid(geometry))[,1], yEdge = st_coordinates(st_centroid(geometry))[,2])
 
 
-f <- function(graph, data, extra) {
-  #result <- rbind(result, data.frame(nodeId = data["vid"], dist = data["dist"]) )
-  #  print(paste0("node = ", data["vid"], ", distance = ", data["dist"]))
-  print(data)
-  x <- data.frame(nodeId = data["vid"], dist = data["dist"])
-  result <<- rbind(result,x)
-  #print(paste0("node = ", x$nodeId, ", distance = ", x$dist))
-  FALSE
-}
+net_falun_parts_lines  <- sfnetwork(nodes = nodes_parts, edges= edges_parts, directed = FALSE, edges_as_lines = TRUE)
 
-bfs(net, root=20, "all")
 
-result <- data.frame(nodeId = integer, dist = integer)
-tmp <- bfs(net, root=20, "all", callback=f, unreachable=FALSE)
-result %>% arrange(dist)
+
+
+plot(net_falun_parts)
+plot(net_falun_parts_lines, add=TRUE, col="red")
+
+
+
+### visualisera traversering av graf
+#net <- as_sfnetwork(sf_falun_lm, directed=FALSE) %>%
+net <- net_falun_parts2
+
+distance(net, root=1)
+
+
 
 p1<-st_as_sf(net, "nodes")%>%
   left_join(result, by=c("nodeId" = "nodeId")) %>%
   ggplot()+
   geom_sf(color = "red")+
   geom_sf(data = st_as_sf(net, "edges"), color = "blue")+
-  geom_text_repel(aes(label = nodeId, x = xNode, y = yNode), color = "red", size=4)+
-  geom_text_repel(data = st_as_sf(net, "edges"), aes(label = edgeId, x = xEdge, y = yEdge), color = "blue", size=4)
-#geom_text(aes(label = sprintf("NodeId %d -> %d m", nodeId, dist), x = XcoordNode, y = YcoordNode), color = "red")
+  ceom_text(aes(label = sprintf("NodeId %d -> %d m", nodeId, dist), x = XcoordNode, y = YcoordNode), color = "red")
 
 p2<-st_as_sf(net, "nodes")%>%
   left_join(result, by=c("nodeId" = "nodeId")) %>%
@@ -84,7 +144,7 @@ p2<-st_as_sf(net, "nodes")%>%
   geom_sf(data = st_as_sf(net, "edges"), color = "blue")+
   geom_text(aes(label = sprintf("%d m", dist), x = xNode, y = yNode), color = "red")
 
-grid.arrange(p1,p2)
+grid.arrange(p0,p1,p2, ncol=2)
 
 
 # beräkna vikt på båge, koordinater för noder och bågar, samt identifiera nod närmast sjukhus
