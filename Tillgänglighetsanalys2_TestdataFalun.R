@@ -4,7 +4,7 @@ Y <- 6719371.765	# koordinater till lasarettet
 X <- 535272.3
 sfc = st_sfc(st_point(x = c(X,Y), "XY"))
 st_crs(sfc) =  st_crs(3006)
-sf_buffer <- st_as_sf(st_buffer(sfc, 600))
+sf_buffer <- st_as_sf(st_buffer(sfc, 200))
 
 
 sf_falun_lm <- sf_vägnät_dalarna_lm %>% 
@@ -41,7 +41,7 @@ sf_falun_nvdb <- sf_falun_nvdb %>%
              suffix=c("", ".centroid"), by=("sf_edge_id")) %>%
   select(HTHAST, XcoordEdge,YcoordEdge, geometry) %>% st_as_sf() 
 
- 
+
 
 # avrunda koordinater till närmaste meter (för att förenkla koppling mellan bågar)
 st_geometry(sf_falun_nvdb) <- st_geometry(sf_falun_nvdb) %>%
@@ -71,3 +71,5 @@ sf_falun_nvdb_point_single <- sf_falun_nvdb_points %>%
 # klipp av bågar i närheten ensamma ändpunkter (TEST!!)
 buffer_points <- st_combine(st_buffer(sf_falun_nvdb_point_single, 5))
 sf_falun_nvdb_parts = st_collection_extract(lwgeom::st_split(sf_falun_nvdb, buffer_points),"LINESTRING")
+
+
