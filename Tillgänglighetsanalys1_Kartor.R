@@ -22,8 +22,11 @@ library(viridis)
 set_config(use_proxy(url = "http://mwg.ltdalarna.se", port = 9090))
 set_config(config(ssl_verifypeer = 0L))
 
+keys <- read.delim("~/GitHub/Tillganglighetsanalys/keys.txt", header = TRUE, sep = ";")
+
+googleApiKey <- as.data.table(keys) %>% filter(Name == "GoogleApiKey") %>% pull(Value)
 ############### ladda google maps ################################
-ggmap::register_google(key = "AIzaSyCRK3RHO1geNjm3CnG2puVrEh-u7a_7kmc") # Jonas nyckel -> kostnader går till Jonas så används med måtta!!
+ggmap::register_google(key = googleApiKey) # Jonas nyckel -> kostnader går till Jonas så används med måtta!!
 
 map_Dalarna <- get_map(location = c(lon = 15.55, lat = 61.55), zoom = 7, maptype = "hybrid")
 map_Falun <- get_map(location = c(lon = 15.65, lat = 60.69), zoom = 10, maptype = "hybrid")
