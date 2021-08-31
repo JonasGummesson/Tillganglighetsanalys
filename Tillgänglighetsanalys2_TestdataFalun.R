@@ -4,15 +4,17 @@ Y <- 6719371.765	# koordinater till lasarettet
 X <- 535272.3
 sfc = st_sfc(st_point(x = c(X,Y), "XY"))
 st_crs(sfc) =  st_crs(3006)
-sf_buffer <- st_as_sf(st_buffer(sfc, 200))
 
-
+# större buffer för lm data <- färre och större vägar
+sf_buffer <- st_as_sf(st_buffer(sfc, 5000))
 sf_falun_lm <- sf_vägnät_dalarna_lm %>% 
   st_zm(drop = TRUE, what = "ZM") %>%  # ta bort Z koordinat
   st_join(sf_buffer, left=FALSE) %>%
   mutate(sf_edge_id = row_number()) %>%
   select(sf_edge_id, geometry)
 
+# mindre buffer för NVDB <- fler mindre vägar
+sf_buffer <- st_as_sf(st_buffer(sfc, 200))
 sf_falun_nvdb <- sf_vägnät_dalarna_nvdb %>% 
   st_zm(drop = TRUE, what = "ZM") %>%  # ta bort Z koordinat
   st_join(sf_buffer, left=FALSE) %>%
@@ -28,18 +30,18 @@ ggplot(sf_falun_lm)+geom_sf(inherit.aes=FALSE)
 sf_falun_lm <- sf_falun_lm %>% 
   as.data.table() %>% 
   inner_join(st_centroid(sf_falun_lm) %>% 
-               mutate(XcoordEdge = st_coordinates(geometry)[,1],
-                      YcoordEdge = st_coordinates(geometry)[,2]), 
+               mutate(xEdge = st_coordinates(geometry)[,1],
+                      yEdge = st_coordinates(geometry)[,2]), 
              suffix=c("", ".centroid"), by=("sf_edge_id")) %>%
-  select(XcoordEdge,YcoordEdge, geometry) %>% st_as_sf() 
+  select(xEdge,yEdge, geometry) %>% st_as_sf() 
 
 sf_falun_nvdb <- sf_falun_nvdb %>% 
   as.data.table() %>% 
   inner_join(st_centroid(sf_falun_nvdb) %>% 
-               mutate(XcoordEdge = st_coordinates(geometry)[,1],
-                      YcoordEdge = st_coordinates(geometry)[,2]), 
+               mutate(xEdge = st_coordinates(geometry)[,1],
+                      yEdge = st_coordinates(geometry)[,2]), 
              suffix=c("", ".centroid"), by=("sf_edge_id")) %>%
-  select(HTHAST, XcoordEdge,YcoordEdge, geometry) %>% st_as_sf() 
+  select(HTHAST, xEdge,yEdge, geometry) %>% st_as_sf() 
 
 
 
