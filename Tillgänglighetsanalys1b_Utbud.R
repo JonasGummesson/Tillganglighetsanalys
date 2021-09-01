@@ -1,0 +1,66 @@
+library(odbc)
+
+sql_utbudspunkt = "
+SELECT 
+	plats.*
+	,bridge.UtbudspunktID 
+	,punkt.Populärnamn
+    ,[Sweref99X]
+      ,[Sweref99Y]
+      ,[Latitude]
+      ,[Longitude]
+FROM dbo.UtbudKommunPlats plats
+LEFT JOIN dbo.UtbudPunkterPerPlats bridge on bridge.UtbudsplatsID = plats.UtbudsplatsID
+LEFT JOIN dbo.UtbudPunkt punkt on punkt.UtbudspunktID = bridge.UtbudspunktID
+WHERE Sweref99X IS NOT NULL
+"
+
+
+connection <- DBI::dbConnect(odbc::odbc(), Driver = "SQL Server", Server = "analys.ltdalarna.se", Database = "Analys", Trusted_Connection = "True", Encoding = "windows-1252")
+dt_utbud <- as.data.table(dbGetQuery(connection, sql_utbudspunkt))
+
+
+dt_utbud_long <- 
+  dt_utbud %>% 
+  pivot_longer(cols = SomatikSluten:Privat, names_to = "Vårdtyp", values_to="VårdtypFinns") %>%
+  filter(VårdtypFinns == "X") %>%
+  select(-VårdtypFinns) %>%
+  mutate(
+    Regi = ifelse(Vårdtyp == "Privat", "Privat", "Offentlig"),
+    Vårdtyp = recode(Vårdtyp, 
+                     "Privat" = "Privat vårdcentral",
+                     "SomatikSluten" = "Somatik sluten",
+                     "SomatikAkut" = "Somatik akut",
+                     "SomatikNärakut" = "Somatik närakut",
+                     "PsykiatriVixenSluten" = "Psykiatri vuxen sluten",
+                     "PsykiatriVuxenÖppen" = "Psykiatri vuxen öppen",
+                     "PsykiatriBarnOchUngdomSluten" = "Psykiatri barn och ungdom sluten",
+                     "PsykiatriBarnOchUngdomÖppen" = "Psykiatri barn och ungdom öppen",
+                     "PsykiatriAkut" = "Psykiatri akut",
+                     "HabiliteringVixen" = "Habilitering vuxen",
+                     "HabiliteringBarn" = "Habilitering barn",
+                     "Ambulansstation" = "Ambulansstation"),
+    VårdtypGrupp = recode(Vårdtyp, 
+                          "Privat" = "Privat vårdcentral",
+                          "Somatik sluten" = "Somatik sluten",
+                          "Somatik akut" = "Somatik akut",
+                          "Somatik närakut" = "Somatik akut",
+                          "Psykiatri vuxen sluten" = "Psykiatri vuxen sluten",
+                          "Psykiatri vuxen öppen" = "Psykiatri vuxen öppen",
+                          "Psykiatri barn och ungdom sluten" = "Psykiatri barn och ungdom sluten",
+                          "Psykiatri barn och ungdom öppen" = "Psykiatri barn och ungdom öppen",
+                          "Psykiatri akut" = "Psykiatri akut",
+                          "Habilitering vuxen" = "Habilitering vuxen",
+                          "Habilitering barn" = "Habilitering barn",
+                          "Ambulansstation" = "Ambulansstation"))
+
+
+
+sf_utbud = dt_utbud_long %>% 
+  sf::st_as_sf(coords = c(which(colnames(dt_utbud_long) == "Sweref99Y"), which(colnames(dt_utbud_long) == "Sweref99X"))) %>%
+  mutate(x = st_coordinates(geometry)[,1], y = st_coordinates(geometry)[,2])
+st_crs(sf_utbud) <- st_crs(3006)
+
+ggplot(sf_utbud)+
+  geom_sf()+
+  geom_text_repel(aes(label = Vårdtyp, x = x, y = y))
