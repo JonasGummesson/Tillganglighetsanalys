@@ -68,3 +68,20 @@ ggplot()+
   geom_text_repel(data = st_as_sf(net_falun_parts, "edges"), aes(label = edgeId, x = xEdge, y = yEdge), color = "blue", size=4)  +
   geom_text_repel(data = st_as_sf(net_falun_parts, "nodes"), aes(label = nodeId, x = xNode, y = yNode), color = "red", size=4)  
 
+
+### identifiera utbudspunkter
+
+utbud_test <- sf_utbud %>% 
+  filter(Populärnamn %like% "Falu Lasarett") %>% group_by(Populärnamn, geometry) %>% 
+  summarise() %>% 
+  as.data.frame() %>%
+  mutate(x =  st_coordinates(geometry)[,1], y =  st_coordinates(geometry)[,2]) %>%
+  select(Populärnamn, x, y)
+
+net_falun_lm %>%
+  activate("nodes") %>%
+  mutate(k=1) %>%
+  inner_join(utbud_test %>% mutate(k=1), by=c("k"="k")) %>%
+  mutate(distUtbud = sqrt((xNode-x)^2+(yNode-y)^2))%>%
+  mutate(rankUtbud = rank(distUtbud))%>%
+  mutate(utbudNamn = ifelse())
