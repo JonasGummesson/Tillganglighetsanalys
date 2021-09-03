@@ -1,7 +1,7 @@
 # OBS! Under utveckling!!!!
 ############################ Nätverksanalys ##############################
 
-# lm
+# lm enbart falun
 net_falun_lm  <- as_sfnetwork(sf_falun_lm, directed = FALSE) %>%
   activate("nodes") %>%
   mutate(nodeId = row_number()) %>%
@@ -10,6 +10,14 @@ net_falun_lm  <- as_sfnetwork(sf_falun_lm, directed = FALSE) %>%
   mutate(weight = edge_length()) %>%
   mutate(edgeId = paste0(from, "-", to))
 
+#lm dalarna
+net_dalarna_lm  <- as_sfnetwork(sf_vägnät_dalarna_lm, directed = FALSE) %>%
+  activate("nodes") %>%
+  mutate(nodeId = row_number()) %>%
+  mutate(xNode = st_coordinates(geometry)[,1], yNode = st_coordinates(geometry)[,2])%>%
+  activate("edges") %>%
+  mutate(weight = edge_length()) %>%
+  mutate(edgeId = paste0(from, "-", to))
 
 # nvdb utan att splitta
 net_falun  <- as_sfnetwork(sf_falun_nvdb, directed = FALSE)
@@ -71,17 +79,80 @@ ggplot()+
 
 ### identifiera utbudspunkter
 
-utbud_test <- sf_utbud %>% 
-  filter(Populärnamn %like% "Falu Lasarett") %>% group_by(Populärnamn, geometry) %>% 
+
+
+utbud_noder <- sf_utbud %>% 
+  mutate(x =  st_coordinates(geometry)[,1], y =  st_coordinates(geometry)[,2]) %>%
+  group_by(Populärnamn, x, y, VårdtypGrupp) %>%
   summarise() %>% 
   as.data.frame() %>%
-  mutate(x =  st_coordinates(geometry)[,1], y =  st_coordinates(geometry)[,2]) %>%
-  select(Populärnamn, x, y)
+  select(Populärnamn, x, y, VårdtypGrupp) #%>%
+ #filter(Populärnamn %like% "Falu Lasarett" | Populärnamn %like% "Mora lasarett") 
+
+
+vägnät_noder_falun_lm <- st_as_sf(net_falun_lm, "nodes") %>% as.data.frame() %>% select(nodeId, xNode, yNode)
+vägnät_noder_dalarna_lm <- st_as_sf(net_dalarna_lm, "nodes") %>% as.data.frame() %>% select(nodeId, xNode, yNode)
+
+#lm närmaste nod falun
+sf_utbud_falun_lm_närmaste_nod <-  utbud_noder %>% 
+  mutate(k=1) %>%
+  inner_join(vägnät_noder_falun_lm %>% mutate(k=1), by=c("k" = "k")) %>%
+  group_by(VårdtypGrupp,Populärnamn) %>%
+  mutate(distUtbud = sqrt((xNode-x)^2+(yNode-y)^2))%>%
+  mutate(rankUtbud = rank(distUtbud))%>%
+  mutate(utbudNamn = ifelse(rankUtbud == 1, Populärnamn, "")) %>%
+  filter(utbudNamn != "") %>%
+ #mutate(test = which(colnames(.) == "xNode")) %>%
+  sf::st_as_sf(coords = c(which(colnames(.) == "xNode"), which(colnames(.) == "yNode"))) 
+st_crs(sf_utbud_falun_lm_närmaste_nod) = st_crs(3006)
+
+
+#lm närmaste nod dalarna
+sf_utbud_dalarna_lm_närmaste_nod <-  utbud_noder %>% 
+  #filter(tolower(Populärnamn) %like% "lasarett") %>%
+  mutate(k=1) %>%
+  inner_join(vägnät_noder_dalarna_lm %>% mutate(k=1), by=c("k" = "k")) %>%
+  group_by(VårdtypGrupp, Populärnamn) %>%
+  mutate(distUtbud = sqrt((xNode-x)^2+(yNode-y)^2))%>%
+  mutate(rankUtbud = rank(distUtbud))%>%
+  mutate(utbudNamn = ifelse(rankUtbud == 1, Populärnamn, "")) %>%
+  arrange(rankUtbud) %>%
+  filter(utbudNamn != "") %>%
+  #mutate(test = which(colnames(.) == "xNode")) %>%
+  sf::st_as_sf(coords = c(which(colnames(.) == "xNode"), which(colnames(.) == "yNode"))) 
+st_crs(sf_utbud_dalarna_lm_närmaste_nod) = st_crs(3006)
+
+
+#sf_utbud_närmaste_nod %>% mutate(t = tolower(Populärnamn)) %>% filter(t )
+
+ggplot()+
+  geom_sf(data = st_as_sf(net_falun_lm, "nodes"), color=  "blue")+
+  geom_sf(data = st_as_sf(net_falun_lm, "edges"), color = "red")+
+  geom_sf(data = sf_utbud_falun_lm_närmaste_nod %>% filter(tolower(Populärnamn) %like%"lasarett"), aes(color=Populärnamn), size=5)
 
 net_falun_lm %>%
   activate("nodes") %>%
-  mutate(k=1) %>%
-  inner_join(utbud_test %>% mutate(k=1), by=c("k"="k")) %>%
-  mutate(distUtbud = sqrt((xNode-x)^2+(yNode-y)^2))%>%
-  mutate(rankUtbud = rank(distUtbud))%>%
-  mutate(utbudNamn = ifelse())
+  left_join(sf_utbud_falun_lm_närmaste_nod %>% as.data.frame() %>% filter(tolower(Populärnamn) %like%"lasarett"), by=c("nodeId" = "nodeId")) %>%
+  filter(!is.na(Populärnamn))
+
+
+ggplot()+
+  geom_sf(data = st_as_sf(net_falun_lm, "nodes"), color=  "blue")+
+  geom_sf(data = st_as_sf(net_falun_lm, "edges"), color = "red")+
+  geom_sf(data = st_as_sf(net_falun_lm %>%
+            activate("nodes") %>%
+            filter(nodeId %in% (sf_utbud_falun_lm_närmaste_nod %>% filter(tolower(Populärnamn) %like%"lasarett") %>% pull(nodeId)))
+          , aes(color=Populärnamn), size=5)
+
+#   geom_text_repel(data = st_as_sf(net_dalarna_lm, "nodes"), aes(label = distUtbud, x = xNode, y = yNode), color = "red", size=4)  
+
+ggplot()+
+  geom_sf(data = st_as_sf(net_dalarna_lm, "nodes"), color=  "blue")+
+  geom_sf(data = st_as_sf(net_dalarna_lm, "edges"), color = "red")+
+  geom_sf(data = sf_utbud_dalarna_lm_närmaste_nod %>% filter(tolower(Populärnamn) %like%"lasarett"), aes(color=Populärnamn), size=5)
+  #geom_text_repel(data = st_as_sf(net_falun_lm_utbud, "nodes"), aes(label = distUtbud, x = xNode, y = yNode), color = "red", size=4)  
+
+
+
+#net_falun_lm_utbud %>% activate(nodes) %>% filter(utbudNamn == "utbudspunkt")
+
