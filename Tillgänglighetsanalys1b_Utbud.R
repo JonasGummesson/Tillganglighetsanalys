@@ -58,9 +58,10 @@ dt_utbud_long <-
 
 sf_utbud = dt_utbud_long %>% 
   sf::st_as_sf(coords = c(which(colnames(dt_utbud_long) == "Sweref99Y"), which(colnames(dt_utbud_long) == "Sweref99X"))) %>%
-  mutate(x = st_coordinates(geometry)[,1], y = st_coordinates(geometry)[,2])
+  mutate(xUtbud = st_coordinates(geometry)[,1], yUtbud = st_coordinates(geometry)[,2]) %>%
+  select(Populärnamn, Vårdtyp, VårdtypGrupp, xUtbud, yUtbud, geometry)
 st_crs(sf_utbud) <- st_crs(3006)
 
 ggplot(sf_utbud)+
   geom_sf()+
-  geom_text_repel(aes(label = Vårdtyp, x = x, y = y))
+  geom_text_repel(aes(label = Vårdtyp, x = xUtbud, y = yUtbud))
