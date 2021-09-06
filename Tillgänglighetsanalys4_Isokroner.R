@@ -39,7 +39,8 @@ sf_isokroner <- dist_dalarna_lm %>%
         ,100)
     }))%>%
   unnest(cols = "sf_alphaShape") %>%
-  st_as_sf()
+  st_as_sf() %>%
+  select(utbudNodeId, VårdtypGrupp, utbudNamn, isokronDistans, polygons)
 
 
 # skapa intervall-shapes
@@ -55,6 +56,7 @@ sf_isokroner_intervall <- sf_isokroner %>%
   mutate(intervallGeometry = st_difference(geometry, föregåendeGeometry)) %>%
   mutate(geometry = intervallGeometry) %>%
   select(VårdtypGrupp, isokronDistansMin, isokronDistansMax, intervallDistans, geometry)
+
 
 
 p1<-  ggplot(data = sf_isokroner_intervall) + 
