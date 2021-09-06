@@ -64,16 +64,21 @@ sf_kommuner_dalarna$KOMMUNNAMN <- iconv(sf_kommuner_dalarna$KOMMUNNAMN, "1252", 
 
 ################## ladda vägnät ####################
 # ladda vägnät, lantmäteriet (saknar vissa vägar och hastighetsdata så denna bör inte användas)
-sf_vägnät_dalarna_lm <- st_read(dsn = "E:/Filer/admgumjon/Vägkartor")
-st_crs(sf_vägnät_dalarna_lm) <- st_crs(3006)
-sf_vägnät_dalarna_lm$KATEGORI <- iconv(sf_vägnät_dalarna_lm$KATEGORI, "1252", "UTF-8")
-str(sf_vägnät_dalarna_lm)
+sf_vägnät_lm <- st_read(dsn = "E:/Filer/admgumjon/Vägkartor") %>%
+  st_zm(drop = TRUE, what = "ZM") %>%  # ta bort Z koordinat
+  mutate(sf_edge_id = row_number())
+st_crs(sf_vägnät_lm) <- st_crs(3006)
+sf_vägnät_lm$KATEGORI <- iconv(sf_vägnät_lm$KATEGORI, "1252", "UTF-8")
 
-ggplot(sf_vägnät_dalarna_lm)+geom_sf()
+
+p <- ggplot(sf_vägnät_lm)+geom_sf()
 
 ################## ladda vägnät NVDB #################
-sf_vägnät_dalarna_nvdb <- st_read(dsn = "E:/Filer/admgumjon/Vägkartor/NVDB_Hastighet")
-st_crs(sf_vägnät_dalarna_nvdb) <- st_crs(3006)
-str(sf_vägnät_dalarna_nvdb)
+sf_vägnät_nvdb <- st_read(dsn = "E:/Filer/admgumjon/Vägkartor/NVDB_Hastighet") %>%
+  st_zm(drop = TRUE, what = "ZM") %>%  # ta bort Z koordinat
+  mutate(sf_edge_id = row_number()) 
 
+st_crs(sf_vägnät_nvdb) <- st_crs(3006)
+
+p <- ggplot(sf_vägnät_nvdb)+geom_sf()
 

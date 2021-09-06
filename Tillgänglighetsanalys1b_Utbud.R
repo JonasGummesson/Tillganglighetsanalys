@@ -63,7 +63,8 @@ sf_utbud = dt_utbud_long %>%
 st_crs(sf_utbud) <- st_crs(3006)
 
 # plotta resultat
-ggplot(sf_utbud)+
+p <- ggplot(sf_utbud)+
   geom_sf(data = sf_kommuner_dalarna)+
   geom_sf(data = sf_utbud %>% st_jitter(1000), aes(color=Vårdtyp), size=5, alpha=0.4)+
   geom_text_repel(data = sf_utbud %>% group_by(Populärnamn, xUtbud, yUtbud) %>% summarise(), aes(label = Populärnamn, x = xUtbud, y = yUtbud), max.overlaps=1000)
+

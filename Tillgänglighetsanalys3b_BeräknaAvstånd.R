@@ -1,20 +1,20 @@
-#library(Rfast)
-#### Distansanalys med Dijkstra
+#### Beräkna avstånd från utbudspunkter
 
 # NVDB <- funkar inte!!
 # PROBLEM: en massa noder går inte att nå!!
-dist_nvdb = distances(graph = net_falun_parts,v=1, mode="out")
+dist_nvdb = distances(graph = net_vägnät_nvdb_falun,v=1, mode="out")
 
-nodes_falun <- sf_utbud_falun_lm_närmaste_nod %>% 
-  as.data.frame() %>% 
-  filter(tolower(Populärnamn) %like% "lasarett") %>% 
-  pull(nodeId)
+############# Beräkna avstånd för lm ###################
+nodes_falun <- unique(sf_utbud_falun_lm %>% 
+                        filter(tolower(VårdtypGrupp) %like% "akut") %>%
+                        pull(nodeId))
 
-nodes_dalarna <- unique(sf_utbud_dalarna_lm_närmaste_nod %>% 
+nodes_dalarna <- unique(sf_utbud_dalarna %>% 
   filter(tolower(VårdtypGrupp) %like% "akut") %>%
   pull(nodeId))
 
-# LM <- funkar
+
+# beräkna avstånd till va
 dist_falun_lm <- t(distances(graph = net_falun_lm, v = nodes_falun, mode = "all")) %>% 
   as.data.table() %>%
   rowwise()%>%
@@ -67,7 +67,7 @@ dist_dalarna_lm <- sf_utbud_dalarna_lm_närmaste_nod %>%
 
 # plotta distans till enskild utbudspunkt
 net <- (dist_dalarna_lm %>% head(1) %>% pull(net))[[1]]
-ggplot()+
+p <- ggplot()+
   geom_sf(data = st_as_sf(net, "edges"), color = "blue")+
   geom_sf(data = st_as_sf(net, "nodes"), aes(color=distance), size=2)+
   # geom_text_repel(data = st_as_sf(net_falun_lm, "edges"), aes(label = paste0(to, "-", from), x = xEdge, y = yEdge), color = "blue", size=4)  +
