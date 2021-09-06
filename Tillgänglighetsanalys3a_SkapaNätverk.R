@@ -10,7 +10,14 @@ net_vägnät_lm_falun  <- as_sfnetwork(sf_vägnät_lm_falun, directed = FALSE) %>%
   mutate(xNode = st_coordinates(geometry)[,1], yNode = st_coordinates(geometry)[,2])%>%
   activate("edges") %>%
   mutate(weight = edge_length()) %>%
-  mutate(edgeId = paste0(from, "-", to))
+  mutate(edgeId = paste0(from, "-", to)) 
+
+# lägg till koordinater för noderna till varje båge
+net_vägnät_lm_falun <- net_vägnät_lm_falun %>%
+  activate(edges) %>%
+  mutate(xNode=NA, yNode=NA) %>%
+  inner_join(st_as_sf(net_vägnät_lm_falun, "nodes") %>% as.data.table(), by=c("to"="nodeId"), suffix=c("", ".node1"))%>%
+  inner_join(st_as_sf(net_vägnät_lm_falun, "nodes") %>% as.data.table(), by=c("from"="nodeId"), suffix=c("", ".node2"))
 
 #lm dalarna
 net_vägnät_lm  <- as_sfnetwork(sf_vägnät_lm, directed = FALSE) %>%
@@ -18,8 +25,29 @@ net_vägnät_lm  <- as_sfnetwork(sf_vägnät_lm, directed = FALSE) %>%
   mutate(nodeId = row_number()) %>%
   mutate(xNode = st_coordinates(geometry)[,1], yNode = st_coordinates(geometry)[,2])%>%
   activate("edges") %>%
-  mutate(weight = edge_length()) %>%
-  mutate(edgeId = paste0(from, "-", to))
+  mutate(weight = edge_length()) 
+
+#net_vägnät_lm <- net_vägnät_lm %>%
+  #activate(edges) %>%
+  #mutate(xNode=NA, yNode=NA) %>%
+  #inner_join(st_as_sf(net_vägnät_lm, "nodes") %>% as.data.table(), by=c("to"="nodeId"), suffix=c("", ".node1"))%>%
+  #inner_join(st_as_sf(net_vägnät_lm, "nodes") %>% as.data.table(), by=c("from"="nodeId"), suffix=c("", ".node2")) 
+  
+
+#plotta Falun 
+
+p1 <- ggplot(sf_vägnät_lm_falun)+geom_sf()
+
+p2 <- ggplot()+
+  geom_sf(data = st_as_sf(net_vägnät_lm_falun, "nodes"), color=  "darkblue")+
+  geom_sf(data = st_as_sf(net_vägnät_lm_falun, "edges"), color = "red", alpha=0.5)
+
+#grid.arrange(p1,p2, ncol=2)
+
+p <- ggplot()+
+  geom_sf(data = st_as_sf(net_vägnät_lm_falun, "nodes"), color=  "darkblue")+
+  geom_sf(data = st_as_sf(net_vägnät_lm_falun, "edges"), color = "red", alpha=0.5)+
+  geom_text(data = st_as_sf(net_vägnät_lm_falun, "edges"), aes(label=sprintf("%.0f m", weight), x = xEdge, y = yEdge))
 
 
 ############## Data från NVDB ################
@@ -44,6 +72,7 @@ p <- ggplot()+
   geom_sf(data = st_as_sf(net_vägnät_nvdb_falun, "nodes"))+
   geom_sf(data = st_as_sf(net_vägnät_nvdb_falun_lines, "edges"), color = "red")
 
+# kolla slaskfil för ytterligare kod för att splitta bågar etc!
 
 ################### identifiera utbudspunkter lm #################################
 
@@ -59,8 +88,8 @@ vägnät_noder_lm_falun <- st_as_sf(net_vägnät_lm_falun, "nodes") %>% as.data.fram
 vägnät_noder_lm <- st_as_sf(net_vägnät_lm, "nodes") %>% as.data.frame() %>% select(nodeId, xNode, yNode)
 
 #lm närmaste nod falun
-sf_utbud_falun_lm <-  utbud_noder %>% 
-  full_join(vägnät_noder_falun_lm , by=character()) %>%
+sf_utbud_lm_falun <-  utbud_noder %>% 
+  full_join(vägnät_noder_lm_falun , by=character()) %>%
   group_by(VårdtypGrupp,Populärnamn) %>%
   mutate(distUtbud = sqrt((xNode-x)^2+(yNode-y)^2))%>%
   mutate(rankUtbud = rank(distUtbud))%>%
@@ -68,7 +97,7 @@ sf_utbud_falun_lm <-  utbud_noder %>%
   filter(utbudNamn != "") %>%
  #mutate(test = which(colnames(.) == "xNode")) %>%
   sf::st_as_sf(coords = c(which(colnames(.) == "xNode"), which(colnames(.) == "yNode"))) 
-st_crs(sf_utbud_falun_lm) = st_crs(3006)
+st_crs(sf_utbud_lm_falun) = st_crs(3006)
 
 
 #lm närmaste nod dalarna
@@ -81,19 +110,19 @@ sf_utbud_lm <-  utbud_noder %>%
   arrange(rankUtbud) %>%
   filter(utbudNamn != "") %>%
   sf::st_as_sf(coords = c(which(colnames(.) == "xNode"), which(colnames(.) == "yNode"))) 
-st_crs(sf_utbud_dalarna_lm) = st_crs(3006)
+st_crs(sf_utbud_lm) = st_crs(3006)
 
 
 #plotta Falun mot lasarett i Dalarna
 p <- ggplot()+
-  geom_sf(data = st_as_sf(net_falun_lm, "nodes"), color=  "darkblue")+
-  geom_sf(data = st_as_sf(net_falun_lm, "edges"), color = "red", alpha=0.5)+
-  geom_sf(data = sf_utbud_falun_lm %>% filter(tolower(Populärnamn) %like%"lasarett"), aes(color=Populärnamn), size=5)
+  geom_sf(data = st_as_sf(net_vägnät_lm_falun, "nodes"), color=  "darkblue")+
+  geom_sf(data = st_as_sf(net_vägnät_lm_falun, "edges"), color = "red", alpha=0.5)+
+  geom_sf(data = sf_utbud_lm_falun %>% filter(tolower(Populärnamn) %like%"lasarett"), aes(color=Populärnamn), size=5)
 
 #plotta Dalarna mot lasarett i Dalarna
 p <- ggplot()+
-  geom_sf(data = st_as_sf(net_dalarna_lm, "nodes"), color=  "darkblue")+
-  geom_sf(data = st_as_sf(net_dalarna_lm, "edges"), color = "darkred", alpha=1)+
-  geom_sf(data = sf_utbud_dalarna_lm %>% filter(tolower(Populärnamn) %like%"lasarett"), aes(color=Populärnamn), size=5)
+  geom_sf(data = st_as_sf(net_vägnät_lm, "nodes"), color=  "darkblue")+
+  geom_sf(data = st_as_sf(net_vägnät_lm, "edges"), color = "darkred", alpha=1)+
+  geom_sf(data = sf_utbud_lm %>% filter(tolower(Populärnamn) %like%"lasarett"), aes(color=Populärnamn), size=5)
 
 

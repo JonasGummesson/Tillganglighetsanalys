@@ -24,3 +24,8 @@ dt_individer <- as.data.table(dbGetQuery(connection, sql_individer))
 
 sf_individer = dt_individer %>% sf::st_as_sf(coords = c(which(colnames(dt_individer) == "Sweref99Y"), which(colnames(dt_individer) == "Sweref99X")))
 st_crs(sf_individer) <- st_crs(3006)
+
+
+p <- ggplot()+
+  geom_sf(data = sf_kommuner_dalarna)+
+  geom_sf(data = sf_individer, color = "red", inherit.aes = FALSE, alpha = 0.3)

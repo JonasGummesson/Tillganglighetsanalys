@@ -53,8 +53,6 @@ map_FalunZoom <- ggmap_4326_to_3006_bbox(get_map(location = c(lon = 15.64, lat =
 
 
 map_Falun <- ggmap_4326_to_3006_bbox(get_map(location = c(lon = 15.65, lat = 60.61), zoom = 12, maptype = "hybrid"))
-ggmap(map_Falun)+
-  geom_sf(data= sf_falun_lm, inherit.aes =FALSE, color = "red", size= 2, alpha=0.3)
 
 ################## ladda kommunkartor #################
 sf_kommuner_dalarna <- st_read(dsn = "E:\\Filer\\admgumjon\\Kommungränser_Dalarna")

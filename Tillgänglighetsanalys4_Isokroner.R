@@ -23,8 +23,10 @@ p2<-ggplot() +
   geom_sf(data = st_as_sf(net_dalarna_lm))+
   labs(title="Alpha shape, concavity 1 & 2,5")
 
-grid.arrange(p1,p2,ncol=2)
+#grid.arrange(p1,p2,ncol=2)
 ## create isochrones
+
+################################# beräkna isokroner ############################
 
 sf_isokroner <- dist_dalarna_lm %>% 
   filter(VårdtypGrupp == "Somatik akut") %>% 
@@ -33,7 +35,7 @@ sf_isokroner <- dist_dalarna_lm %>%
   full_join(tibble(isokronDistans = c(10000,20000,30000,50000)), by=character()) %>%
   mutate(sf_alphaShape = map2(.x = isokronDistans, .y = net, .f = function(x,y) { 
       st_buffer(
-        concaveman( st_as_sf(y) %>% filter(distance < x), concavity = 1)
+        concaveman( st_as_sf(y, "nodes") %>% filter(distance < x), concavity = 1)
         ,100)
     }))%>%
   unnest(cols = "sf_alphaShape") %>%
@@ -52,19 +54,27 @@ sf_isokroner_intervall <- sf_isokroner %>%
   rowwise() %>%
   mutate(intervallGeometry = st_difference(geometry, föregåendeGeometry)) %>%
   mutate(geometry = intervallGeometry) %>%
-  select(VårdtypGrupp, isokronDistansMin, isokronDistansMax, geometry)
+  select(VårdtypGrupp, isokronDistansMin, isokronDistansMax, intervallDistans, geometry)
 
 
 p1<-  ggplot(data = sf_isokroner_intervall) + 
   geom_sf(data = sf_kommuner_dalarna)+
-  geom_sf(color = "black", aes(fill = isokronDistansMax)) + 
-  facet_wrap(~isokronDistansMax)+
-  scale_fill_viridis_c(option = "plasma", direction=-1)
+  geom_sf(color = "black", aes(fill = intervallDistans)) + 
+  facet_wrap(~intervallDistans)+
+  scale_fill_viridis_d(option = "plasma", direction=-1)+
+  theme_minimal()+
+  theme(axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank())+
+  theme(axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank())+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 p2<-ggplot(data = sf_isokroner_intervall) + 
   geom_sf(data = sf_kommuner_dalarna)+
-  geom_sf(color = "black", aes(fill = isokronDistansMax))+ 
-  scale_fill_viridis_c(option = "plasma", direction=-1)
+  geom_sf(color = "black", aes(fill = intervallDistans))+ 
+  scale_fill_viridis_d(option = "plasma", direction=-1)+
+  theme_minimal()+
+  theme(axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank())+
+  theme(axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank())+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
   grid.arrange(p1,p2, ncol = 2)
 
