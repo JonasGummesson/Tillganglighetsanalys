@@ -24,6 +24,9 @@ sf_falun_nvdb <- sf_vägnät_dalarna_nvdb %>%
 
 
 ggplot(sf_falun_lm)+geom_sf(inherit.aes=FALSE)
+ggmap(map_Falun)+
+  geom_sf(data= sf_falun_lm, inherit.aes =FALSE, color = "red", size= 2)
+  
 
 
 # lägg till centroid-koordinater för bågar   
