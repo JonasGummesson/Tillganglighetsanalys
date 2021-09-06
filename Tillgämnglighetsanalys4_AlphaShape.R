@@ -6,23 +6,26 @@ utbudspunktExempel <- (dist_dalarna_lm %>% head(1) %>% pull(net))[[1]]
 
 # create convex hull
 
-chull <- st_convex_hull(st_union(st_as_sf(utbudspunktExempel, "nodes") %>% filter(distance<=50000)))
-ggplot() +
-  geom_sf(data = sf_dalarna_lm_dist)+
-  geom_sf(data = chull, color = "red", fill =NA) 
+chull <- st_convex_hull(st_union(st_as_sf(utbudspunktExempel, "nodes")))
+p1<-ggplot() +
+  geom_sf(data = st_as_sf(net_dalarna_lm))+
+  geom_sf(data = chull, color = "green", fill =NA, size=2) +
+  labs(title="Convex hull")
 
 # create concave hull
 
 conc1 <- concaveman(st_as_sf(utbudspunktExempel), concavity = 1)
 conc2 <- concaveman(st_as_sf(utbudspunktExempel), concavity = 2.5)
 
-ggplot() +
-  geom_sf(data = conc1, color = "red", fill= NA) +
-  geom_sf(data = conc2, color = "blue", fill = NA) +
-  geom_sf(data = st_as_sf(net_dalarna_lm))
+p2<-ggplot() +
+  geom_sf(data = conc1, color = "red", fill= NA, size=2) +
+  geom_sf(data = conc2, color = "blue", fill = NA, size=2) +
+  geom_sf(data = st_as_sf(net_dalarna_lm))+
+  labs(title="Alpha shape, concavity 1 & 2,5")
 
+grid.arrange(p1,p2,ncol=2)
+## create isochrones
 
-#?concaveman
 sf_isokroner <- dist_dalarna_lm %>% 
   filter(VårdtypGrupp == "Somatik akut") %>% 
  # filter(Populärnamn == "Avesta lasarett") %>% 
@@ -36,56 +39,32 @@ sf_isokroner <- dist_dalarna_lm %>%
   unnest(cols = "sf_alphaShape") %>%
   st_as_sf()
 
-?st_union
-sf_test <- sf_isokroner %>%
+
+# skapa intervall-shapes
+sf_isokroner_intervall <- sf_isokroner %>%
   group_by(VårdtypGrupp, isokronDistans) %>%
   summarise(geometry = st_union(polygons)) %>%
-  mutate(föregåendeGeometry = lag(geometry, 1, order_by = isokronDistans)) %>%
-  mutate(intervallDistans = paste0(lag(isokronDistans, 1, order_by = isokronDistans), "-", isokronDistans)) %>%
-  #mutate(test = ifelse(!is.na(st_dimension(föregåendePolygon)), 1, 0))
+  mutate(föregåendeGeometry = lag(geometry, 1, order_by = isokronDistans),
+         isokronDistansMin = replace_na(lag(isokronDistans, 1, order_by = isokronDistans),0),
+         isokronDistansMax = isokronDistans) %>%
+  mutate(intervallDistans = paste0(isokronDistansMin, "-", isokronDistansMax)) %>%
   ungroup()%>%
   rowwise() %>%
-  mutate(diffPolygons = ifelse(!is.na(st_dimension(föregåendeGeometry)), st_union(st_difference(föregåendeGeometry))[1], NA)) %>%
-  filter(isokronDistans == 30000) %>% pull(diffPolygons)
-
-  ggplot() + geom_sf(data = sf_test, aes(geometry = diffPolygons), color = "green", fill = "white")
-  
-  
-sf1 <- sf_isokroner %>% filter(isokronDistans == 30000) %>% group_by(isokronDistans) %>%  summarise(geometry = st_union(polygons))
-sf2 <- sf_isokroner %>% filter(isokronDistans == 50000)%>% group_by(isokronDistans) %>%  summarise(geometry = st_union(polygons))
-sf3 <- st_difference(sf2, sf1)
-
-st_geometry(sf1) = "geometry"
-st_geometry(sf2) = "geometry"
-st_geometry(sf3) = "geometry"
+  mutate(intervallGeometry = st_difference(geometry, föregåendeGeometry)) %>%
+  mutate(geometry = intervallGeometry) %>%
+  select(VårdtypGrupp, isokronDistansMin, isokronDistansMax, geometry)
 
 
-grid.arrange(
-ggplot() + geom_sf(data = sf1, aes(geometry = geometry), color = "red", fill = "white") ,
-ggplot() + geom_sf(data = sf2, aes(geometry = geometry), color = "blue", fill = "white"),
-ggplot() + geom_sf(data = sf3, color = "green", fill = "white")
-)
-  
-  
-ggplot(.) +
-  geom_sf(data = sf_kommuner_dalarna) +
-  #geom_sf(aes(fill = intervallDistans, geometry=polygons), alpha = 1)+
-  geom_sf(aes(fill = intervallDistans, geometry=diffPolygons), alpha = 1)+
-  facet_wrap(~intervallDistans)+
-  scale_fill_viridis_d(option = "plasma")
+p1<-  ggplot(data = sf_isokroner_intervall) + 
+  geom_sf(data = sf_kommuner_dalarna)+
+  geom_sf(color = "black", aes(fill = isokronDistansMax)) + 
+  facet_wrap(~isokronDistansMax)+
+  scale_fill_viridis_c(option = "plasma", direction=-1)
 
+p2<-ggplot(data = sf_isokroner_intervall) + 
+  geom_sf(data = sf_kommuner_dalarna)+
+  geom_sf(color = "black", aes(fill = isokronDistansMax))+ 
+  scale_fill_viridis_c(option = "plasma", direction=-1)
 
-
-?replace
-sf_isokroner %>% 
-  select(VårdtypGrupp, isokronDistans, polygons) %>%
-  group_by(VårdtypGrupp, isokronDistans) %>%
-  summarise(polygons = st_union(polygons)) %>%
-  arrange(desc(isokronDistans)) %>%
-  mutate(isokronDistans=factor(isokronDistans, levels = unique(isokronDistans)))  %>%
-  #mutate(isokronDistans = as.double(as.character(isokronDistans))) %>%
-ggplot(.) +
-  geom_sf(data = sf_kommuner_dalarna) +
-  geom_sf(aes(fill = isokronDistans), alpha = 1)+
-  scale_fill_viridis_d(option = "plasma")
+  grid.arrange(p1,p2, ncol = 2)
 
