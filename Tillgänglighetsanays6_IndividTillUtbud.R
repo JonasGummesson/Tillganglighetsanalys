@@ -36,20 +36,20 @@ mbm = microbenchmark(
 )
 mbm
 
-# dplyr               --> 15 sekunder
 # data.table          --> 10 sekunder
+# dplyr               --> 15 sekunder
 # st_nearest_feature  --> 143 sekunder
 
 
-dt <-  sf_individer %>% 
-  filter(RecordId == 870292) %>%
-  as.data.table() %>% 
-  select(individId, xIndivid, yIndivid) %>%
-  full_join(vägnät_noder_lm %>% as.data.table() , by=character()) %>%
-  mutate(distansTillNod = sqrt((xNode-xIndivid)^2+(yNode-yIndivid)^2))%>%
-  group_by(individId)%>%
-  mutate(rankDistans = rank(distansTillNod)) %>%
-  filter(rankDistans == 1)
+#dt <-  sf_individer %>% 
+  #filter(RecordId == 870292) %>%
+  #as.data.table() %>% 
+  #select(individId, xIndivid, yIndivid) %>%
+  #full_join(vägnät_noder_lm %>% as.data.table() , by=character()) %>%
+  #mutate(distansTillNod = sqrt((xNode-xIndivid)^2+(yNode-yIndivid)^2))%>%
+  #group_by(individId)%>%
+  #mutate(rankDistans = rank(distansTillNod)) %>%
+  #filter(rankDistans == 1)
 
 
 ##run with data.table
@@ -65,7 +65,7 @@ dt_individer_lm <- dt_individer %>% mutate(closestNodeId = as.integer(NA))
 # provade cross join, blev 13 miljarder rader, kör loop istället...
 mbm = microbenchmark(
   # tar 3600 s = 1 timme
-    for(i in  1:nrow(dt_individer))
+    for(i in  1:nrow(dt_individer)) 
     {
         xIndivid <- dt_individer[i, "xIndivid"] %>% pull(xIndivid)
         yIndivid <- dt_individer[i, "yIndivid"] %>% pull(yIndivid)
@@ -83,8 +83,7 @@ mbm = microbenchmark(
 
 mbm
 
-write.table(dt_individer_lm, file = "E:/filer/admgumjon/dt_individer_lm",
-            sep = "\t", row.names = T)
+write.table(dt_individer_lm, file = "E:/filer/admgumjon/dt_individer_lm",sep = "\t", row.names = T)
 
 #test <- read.table(file = "E:/filer/admgumjon/dt_individer_lm",sep = "\t", header = T)
 
