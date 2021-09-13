@@ -30,15 +30,12 @@ net_vägnät_lm_falun %>%
 
 # beräkna avstånd till Lasarettet i Falun
 dist_falun_lm <- sf_utbud_lm_falun %>%
-  filter(VårdtypGrupp == "Somatik akut") %>%
-  filter(utbudNamn == "Falu Lasarett") %>%
+  filter(VårdtypGrupp == "Somatik akut" | VårdtypGrupp == "Primärvård") %>%
   rename("utbudNodeId" = "nodeId", "utbudX" = "x", utbudY = "y") %>%
   as.data.table() %>%
   select(utbudNodeId, utbudX, utbudY) %>%
   group_by(utbudNodeId, utbudX, utbudY) %>%
   summarise() %>%
-  # head(1) %>%
-  #select(utbudNamn, utbudNodeId, utbudX, utbudY, VårdtypGrupp) %>%
   mutate(net = map(.x = utbudNodeId, .f = function(utbudNodeId){
     temp <- net_vägnät_lm_falun %>%
       activate("nodes") %>%
@@ -99,7 +96,7 @@ p <- ggmap(map_Falun)+
 
 ############################### Beräkna för hela Dalarna ###################################################
 dist_dalarna_lm <- sf_utbud_lm %>%
-  filter(VårdtypGrupp == "Somatik akut") %>%
+  filter(VårdtypGrupp == "Somatik akut" | VårdtypGrupp == "Primärvård")  %>%
   rename("utbudNodeId" = "nodeId", "utbudX" = "x", utbudY = "y") %>%
   as.data.table() %>%
   select(utbudNodeId, utbudX, utbudY) %>%
@@ -134,7 +131,8 @@ dist_dalarna_lm <- sf_utbud_lm %>%
           select(sf_edge_id, distance.NodeMax, distance.NodeMaxKm)
         ,by=c("sf_edge_id"="sf_edge_id"))
     })) %>%
-  left_join(sf_utbud_lm %>% select(Populärnamn, VårdtypGrupp, utbudNamn, nodeId), by=c("utbudNodeId" = "nodeId"))
+  left_join(sf_utbud_lm %>% select(Populärnamn, VårdtypGrupp, utbudNamn, nodeId) %>% filter(VårdtypGrupp == "Somatik akut" | VårdtypGrupp == "Primärvård")
+              , by=c("utbudNodeId" = "nodeId"))
   
   
 
