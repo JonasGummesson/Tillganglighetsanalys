@@ -96,8 +96,8 @@ sf_utbud_lm_falun <-  utbud_noder %>%
   mutate(utbudNamn = ifelse(rankUtbud == 1, Populärnamn, "")) %>%
   filter(utbudNamn != "") %>%
  #mutate(test = which(colnames(.) == "xNode")) %>%
-  sf::st_as_sf(coords = c(which(colnames(.) == "xNode"), which(colnames(.) == "yNode"))) 
-st_crs(sf_utbud_lm_falun) = st_crs(3006)
+  sf::st_as_sf(coords = c(which(colnames(.) == "xNode"), which(colnames(.) == "yNode")))%>%
+  st_set_crs(3006)
 
 
 #lm närmaste nod dalarna

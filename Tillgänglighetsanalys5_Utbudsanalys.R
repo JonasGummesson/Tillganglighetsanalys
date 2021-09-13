@@ -25,9 +25,7 @@ sf_result <-
 )
 
 #autoplot(mbm)
-   #?microbenchmark     
-sf_result
-
+ 
 ## Aggregera utbudspunkter innan isokronberäkning
 
 #dist_vårdtypgrupp_nodes %>% nest(cols = VårdtypGrupp)
@@ -65,7 +63,7 @@ st_as_sf(net_dalarna_lm, "edges") %>%
 
 
 
-ggplot()+
+p <- ggplot()+
   geom_sf(data = st_as_sf(net, "edges") %>% inner_join(dist_vårdtypgrupp_edges, by=c("sf_edge_id"="sf_edge_id")), aes(color=distance.nodeMaxKm))+
   facet_wrap(~VårdtypGrupp)+
   #geom_sf(data = st_as_sf(net, "nodes") %>% select(nodeId) %>% inner_join(dist_vårdtypgrupp %>% mutate(distanceKm = distance/1000), by=c("nodeId"="nodeId")), aes(color=distance), size=2)+
@@ -79,10 +77,9 @@ ggplot()+
                         values = c(0,0.2,1),
                         name="Distans (km)",
                         na.value = "grey100") 
-?magma
-?scale_color_gradientn
+
 # noder som inte kan nås
-ggplot()+
+p <- ggplot()+
   geom_sf(data = st_as_sf(net, "nodes") %>% select(nodeId) %>% inner_join(dist_vårdtypgrupp %>% filter(distance == Inf), by=c("nodeId"="nodeId")), color="blue", size=2)+
     geom_sf(data = st_as_sf(net, "edges") %>% inner_join(dist_vårdtypgrupp_edges, by=c("sf_edge_id"="sf_edge_id")) %>% filter(distance.nodeMaxKm == Inf), color = "red")+
 

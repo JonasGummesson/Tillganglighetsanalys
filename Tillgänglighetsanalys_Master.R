@@ -21,3 +21,7 @@ source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys4_Isokroner.R")
 
 ########################### skapa nätverksobjekt och beräkna avstånd ####################
 source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys5_Utbudsanalys.R")
+
+
+########################### beräkna distans mellan utbud och individer ####################
+source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys5_Utbudsanalys.R")

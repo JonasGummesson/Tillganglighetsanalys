@@ -5,11 +5,11 @@
 dist_nvdb = distances(graph = net_vägnät_nvdb_falun,v=1, mode="out")
 
 ############# Beräkna avstånd för lm ###################
-noder_utbud_falun <- unique(sf_utbud_falun_lm %>% 
+noder_utbud_falun <- unique(sf_utbud_lm_falun %>% 
                         filter(tolower(VårdtypGrupp) %like% "akut") %>%
                         pull(nodeId))
 
-nodes_utbud <- unique(sf_utbud_dalarna_lm %>% 
+nodes_utbud <- unique(sf_utbud_lm %>% 
   filter(tolower(VårdtypGrupp) %like% "akut") %>%
   pull(nodeId))
 
