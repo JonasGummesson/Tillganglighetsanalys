@@ -156,9 +156,15 @@ p <- ggplot()+
                         na.value = "grey100") 
 
 
+### diskretisera avstånd
 
-
-
+p <- ggplot()+
+  geom_sf(data = st_as_sf(net %>% mutate(), "edges") %>% mutate(distance.discrete= cut(distance.NodeMaxKm, breaks = c(0,20,40,60,100,200))), aes(color=distance.discrete))+
+  theme_minimal()+
+  theme(axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank())+
+  theme(axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank())+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  scale_fill_viridis_d(option = "magma", direction=-1)
 
 
 

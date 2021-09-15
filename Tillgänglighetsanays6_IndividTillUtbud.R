@@ -56,8 +56,8 @@ library(htmlTable)
 dt_individer <- sf_individer %>% 
   #filter(RecordId == 870292) %>%
   as.data.table() %>%
-  select(individId, xIndivid, yIndivid)
-dt_vägnät <- st_as_sf(net_v?gn?t_lm, "nodes") %>% as.data.table() %>% select(nodeId, xNode, yNode)
+  select(PatientID_AES, individId, xIndivid, yIndivid)
+dt_vägnät <- st_as_sf(net_vägnät_lm, "nodes") %>% as.data.table() %>% select(nodeId, xNode, yNode)
 dt_individer_lm <- dt_individer %>% mutate(closestNodeId = as.integer(NA))
 
 
@@ -70,7 +70,7 @@ mbm = microbenchmark(
         yIndivid <- dt_individer[i, "yIndivid"] %>% pull(yIndivid)
   
         closestNodeId <-
-        dt_v?gn?t %>%
+        dt_vägnät %>%
           mutate(distansTillNod = sqrt((xNode-xIndivid)^2+(yNode-yIndivid)^2)) %>%
           mutate(rankDistans = rank(distansTillNod)) %>%
           filter(rankDistans == 1) %>%
@@ -78,7 +78,7 @@ mbm = microbenchmark(
         
         dt_individer_lm[i, "closestNodeId"] <- closestNodeId
     },
-    times=0) ## change to 1 when you want to run this process
+    times=1) ## change to 1 when you want to run this process
 
 mbm
 
@@ -88,29 +88,27 @@ mbm
 # load last processed data
 #dt_individer_lm <- read.table(file = "E:/filer/admgumjon/dt_individer_lm",sep = "\t", header = T)
 
-
-
-
 ggplot()+
   geom_sf(data = st_as_sf(net_dalarna_lm, "nodes"))+
   geom_sf(data = st_as_sf(net_dalarna_lm, "nodes") %>% inner_join(dt, by=c("nodeId"="nodeId")), color = "red")
   
 
-sf_individer %>% filter(RecordId == 870292)
-dt_individer_lm %>% filter(individId == 67874)
+#sf_individer %>% filter(RecordId == 870292)
+#dt_individer_lm %>% filter(individId == 67874)
 
 ### individer och somatisk akut
 
 
 sf_individer_lm_dist <- sf_individer %>% 
-  select(RecordId, ?lder, K?n, Kommun, individId) %>%
-  inner_join(dt_individer_lm, by=c("individId" = "individId")) %>%
+  select(PatientID_AES, Ålder, Kön, Kommun) %>%
+  inner_join(dt_individer_lm, by=c("PatientID_AES" = "PatientID_AES")) %>%
   inner_join(
-    dist_v?rdtypgrupp_nodes %>%
-      filter(V?rdtypGrupp == "Somatik akut"),
+    dist_vårdtypgrupp_nodes %>%
+      filter(VårdtypGrupp == "Somatik akut"),
     by=c("closestNodeId" = "nodeId")
   ) %>%
-  filter(!is.na(distance) & !is.infinite(distance))
+  filter(!is.na(distance) & !is.infinite(distance))%>%
+  mutate(distansKm = distance/1000)
   
 sf_individer_lm_dist %>% 
   as.data.table() %>%
@@ -121,27 +119,30 @@ sf_individer_lm_dist %>%
   #rename_with(~iconv(., "windows-1252", "UTF-8"), everything()) %>%
   as.data.table() %>%
   rename(Medel = Distans.medel, Median = Distans.median) %>%
+  mutate(Medel = Medel/1000, Median = Median/1000) %>%
   pivot_longer(cols = Medel:n, names_to = "parameter", values_to = "value") %>%
-  mutate(group = ifelse(parameter == "n", "Folkbokförda", "Distans")) %>%
+  mutate(group = ifelse(parameter == "n", "Individer", "Distans (km)")) %>%
   mutate(group = iconv(group, from="", to="UTF-8", sub="byte")) %>%
   mutate(Kommun = iconv(Kommun, from="",to="UTF-8")) %>% 
+
   #distinct(Kommun)
          #group = iconv(group, "UTF-8", "latin1")) %>%
  # mutate(across(where(is_character), function(x) { iconv(x, "UTF-8", "latin1")})) %>%
  # mutate(across(where(is_character), function(x) { iconv(x, "windows-1252", "latin1")})) %>%
-  mutate(across(where(is_integer), function(x) { format(x, digits=9, decimal.mark=",",big.mark=" ",small.mark=".", small.interval=3)})) %>%
+  mutate(across(where(is_numeric), function(x) { format(round(x,0), digits=9,nsmall=0, decimal.mark=",",big.mark=" ",small.mark=" ", small.interval=3)})) %>%
   addHtmlTableStyle(align = "lrrr", 
                   align.header = "lrrr", 
                   css.cell = "padding-left: 1em; padding-right: 1em;",
                   css.header = "padding-left: 1em; padding-right: 1em;") %>%
-  #tidyHtmlTable(header = parameter,cgroup = group,rnames = Kommun)
-  htmlTable()
+  tidyHtmlTable(header = parameter,cgroup = group,rnames = Kommun)
+  #htmlTable()
 
-
+?format
 
 ggplot(sf_individer_lm_dist) +
-  geom_sf(aes(color = distance))+
-  geom_sf(data=sf_kommuner_dalarna, fill = NA, color = "grey", linetype="dashed")+
+  geom_sf(data=sf_vägnät_lm, color="grey")+
+  geom_sf(aes(color = distansKm))+
+  geom_sf(data=sf_kommuner_dalarna, fill = NA, color = "black", linetype="dashed")+
   theme_minimal()+
   theme(axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank())+
   theme(axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank())+
@@ -149,11 +150,5 @@ ggplot(sf_individer_lm_dist) +
   scale_color_gradientn(colours=magma(20, begin=1, end=0),
                         name="Distans (km)",
                         na.value = "grey100") 
-
-
-
-
-  
-
 
 

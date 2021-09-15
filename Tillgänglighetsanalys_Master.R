@@ -16,6 +16,10 @@ source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys2b_TestdataFalun.R")
 source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys3a_SkapaNätverk.R")
 source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys3b_BeräknaAvstånd.R")
 
+
+source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys3a_SkapaNätverk_NVDB.R")
+source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys3b_BeräknaAvstånd_NVDB.R")
+
 ########################### skapa isokroner ####################
 source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys4_Isokroner.R")
 
@@ -23,5 +27,14 @@ source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys4_Isokroner.R")
 source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys5_Utbudsanalys.R")
 
 
-########################### beräkna distans mellan utbud och individer ####################
+########################### beräkna diskret distans mellan utbud och individer ####################
 source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys5_Utbudsanalys.R")
+
+
+########################### beräkna kontinuerlig distans mellan utbud och individer ####################
+source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys6_IndividTillUtbud.R")
+
+
+
+########################### kör regressioner på utbud och avstånd ####################
+source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys7_Regressioner.R")

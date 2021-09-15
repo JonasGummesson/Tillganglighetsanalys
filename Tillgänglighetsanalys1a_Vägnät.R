@@ -78,5 +78,11 @@ sf_vägnät_nvdb <- st_read(dsn = "E:/Filer/admgumjon/Vägkartor/NVDB_Hastighet") %
   mutate(sf_edge_id = row_number()) %>%
   st_set_crs(3006)
 
-p <- ggplot(sf_vägnät_nvdb)+geom_sf()
+sf_vägnät_nvdb_cleaned <- st_read(dsn = "E:/Filer/admgumjon/Vägkartor/NVDB_Hastighet/FixedAndCleaned") %>%
+  st_zm(drop = TRUE, what = "ZM") %>%  # ta bort Z koordinat
+  mutate(sf_edge_id = row_number()) %>%
+  st_set_crs(3006)
+
+
+p <- ggplot(sf_vägnät_nvdb_cleaned)+geom_sf()
 

@@ -21,3 +21,6 @@ sf_vägnät_nvdb <- sf_vägnät_nvdb %>%
 
 
 
+
+
+

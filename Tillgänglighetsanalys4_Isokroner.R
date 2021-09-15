@@ -8,7 +8,7 @@ utbudspunktExempel <- (dist_dalarna_lm %>% head(1) %>% pull(net))[[1]]
 
 chull <- st_convex_hull(st_union(st_as_sf(utbudspunktExempel, "nodes")))
 p1<-ggplot() +
-  geom_sf(data = st_as_sf(net_dalarna_lm))+
+  geom_sf(data = st_as_sf(net_vägnät_lm))+
   geom_sf(data = chull, color = "green", fill =NA, size=2) +
   labs(title="Convex hull")
 
@@ -20,7 +20,7 @@ conc2 <- concaveman(st_as_sf(utbudspunktExempel), concavity = 2.5)
 p2<-ggplot() +
   geom_sf(data = conc1, color = "red", fill= NA, size=2) +
   geom_sf(data = conc2, color = "blue", fill = NA, size=2) +
-  geom_sf(data = st_as_sf(net_dalarna_lm))+
+  geom_sf(data = st_as_sf(net_vägnät_lm))+
   labs(title="Alpha shape, concavity 1 & 2,5")
 
 #grid.arrange(p1,p2,ncol=2)
@@ -46,7 +46,7 @@ sf_isokroner <- dist_dalarna_lm %>%
   arrange(desc(isokronDistans)) %>%
   mutate(isokronDistansFct=factor(isokronDistans, levels = unique(isokronDistans)))
 
-ggplot(data = sf_isokroner) + 
+p<-ggplot(data = sf_isokroner) + 
   geom_sf(data = sf_kommuner_dalarna)+
   geom_sf(color = "black", aes(fill = isokronDistansFct)) + 
   facet_wrap(~VårdtypGrupp)+
@@ -93,4 +93,5 @@ p2<-ggplot(data = sf_isokroner_intervall) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
   grid.arrange(p1,p2, ncol = 2)
+
 
