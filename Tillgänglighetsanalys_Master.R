@@ -21,7 +21,8 @@ source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys3a_SkapaNätverk_NVDB
 source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys3b_BeräknaAvstånd_NVDB.R")
 
 ########################### skapa isokroner ####################
-source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys4_Isokroner.R")
+#source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys4_Isokroner_LM.R")
+source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys4_Isokroner_NVDB.R")
 
 ########################### skapa nätverksobjekt och beräkna avstånd ####################
 source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys5_Utbudsanalys.R")
