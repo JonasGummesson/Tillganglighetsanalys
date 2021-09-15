@@ -25,7 +25,8 @@ source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys3b_BeräknaAvstånd_NV
 source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys4_Isokroner_NVDB.R")
 
 ########################### skapa nätverksobjekt och beräkna avstånd ####################
-source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys5_Utbudsanalys.R")
+#source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys5_Utbudsanalys_LM.R")
+source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys5_Utbudsanalys_NVDB.R")
 
 
 ########################### beräkna diskret distans mellan utbud och individer ####################

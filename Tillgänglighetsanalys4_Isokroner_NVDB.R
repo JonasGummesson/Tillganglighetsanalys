@@ -63,5 +63,15 @@ p2<-ggplot(data = sf_isokroner_intervall) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
   grid.arrange(p1,p2, ncol = 2)
+  
+  ggplot(data = sf_isokroner_intervall %>% filter(VårdtypGrupp == "Primärvård" | VårdtypGrupp == "Somatik akut")) + 
+    geom_sf(data = sf_kommuner_dalarna)+
+    geom_sf( aes(fill = intervallDistans), color = NA, alpha = 0.8)+ 
+    facet_wrap(~VårdtypGrupp)+
+    scale_fill_viridis_d(option = "plasma", direction=-1)+
+    theme_minimal()+
+    theme(axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank())+
+    theme(axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank())+
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 
