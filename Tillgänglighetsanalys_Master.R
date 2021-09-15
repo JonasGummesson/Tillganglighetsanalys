@@ -13,8 +13,8 @@ source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys2a_FörberedaVägnät.R
 source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys2b_TestdataFalun.R")
 
 ########################### skapa nätverksobjekt och beräkna avstånd ####################
-source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys3a_SkapaNätverk.R")
-source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys3b_BeräknaAvstånd.R")
+#source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys3a_SkapaNätverk_LM.R")
+#source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys3b_BeräknaAvstånd_LM.R")
 
 
 source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys3a_SkapaNätverk_NVDB.R")

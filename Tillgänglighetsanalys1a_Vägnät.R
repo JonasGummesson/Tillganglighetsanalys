@@ -73,12 +73,13 @@ sf_vägnät_lm <- st_read(dsn = "E:/Filer/admgumjon/Vägkartor") %>%
 p <- ggplot(sf_vägnät_lm)+geom_sf()
 
 ################## ladda vägnät NVDB #################
-sf_vägnät_nvdb <- st_read(dsn = "E:/Filer/admgumjon/Vägkartor/NVDB_Hastighet") %>%
-  st_zm(drop = TRUE, what = "ZM") %>%  # ta bort Z koordinat
-  mutate(sf_edge_id = row_number()) %>%
-  st_set_crs(3006)
+# originalkarta som är problematisk vid omvandling till graf med noder och bågar
+#sf_vägnät_nvdb <- st_read(dsn = "E:/Filer/admgumjon/Vägkartor/NVDB_Hastighet") %>%
+  #st_zm(drop = TRUE, what = "ZM") %>%  # ta bort Z koordinat
+  #mutate(sf_edge_id = row_number()) %>%
+  #st_set_crs(3006)
 
-sf_vägnät_nvdb_cleaned <- st_read(dsn = "E:/Filer/admgumjon/Vägkartor/NVDB_Hastighet/FixedAndCleaned") %>%
+sf_vägnät_nvdb <- st_read(dsn = "E:/Filer/admgumjon/Vägkartor/NVDB_Hastighet/FixedAndCleaned") %>%
   st_zm(drop = TRUE, what = "ZM") %>%  # ta bort Z koordinat
   mutate(sf_edge_id = row_number()) %>%
   st_set_crs(3006)

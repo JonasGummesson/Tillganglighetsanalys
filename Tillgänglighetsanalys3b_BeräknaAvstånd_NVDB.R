@@ -7,9 +7,9 @@ nodes_utbud <- unique(sf_utbud_nvdb %>%
 
 
 ############################### Beräkna för hela Dalarna ###################################################
-mbm = microbenchmark(
+mbm_dist_dalarna_nvdb = microbenchmark(
   dist_dalarna_nvdb <- sf_utbud_nvdb %>%
-    filter(VårdtypGrupp == "Somatik akut" | VårdtypGrupp == "Primärvård")  %>%
+    #filter(VårdtypGrupp == "Somatik akut" | VårdtypGrupp == "Primärvård")  %>%
     rename("utbudNodeId" = "nodeId", "utbudX" = "x", utbudY = "y") %>%
     as.data.table() %>%
     select(utbudNodeId, utbudX, utbudY) %>%
@@ -42,10 +42,10 @@ mbm = microbenchmark(
             select(sf_edge_id, distance.NodeMax, distance.NodeMaxKm)
           ,by=c("sf_edge_id"="sf_edge_id"))
       })) %>%
-    left_join(sf_utbud_nvdb %>% select(Populärnamn, VårdtypGrupp, utbudNamn, nodeId) %>% filter(VårdtypGrupp == "Somatik akut" | VårdtypGrupp == "Primärvård")
+    left_join(sf_utbud_nvdb %>% select(Populärnamn, VårdtypGrupp, utbudNamn, nodeId) #%>% filter(VårdtypGrupp == "Somatik akut" | VårdtypGrupp == "Primärvård")
                 , by=c("utbudNodeId" = "nodeId")),
   times = 1)
-#mbm
+#mbm_dist_dalarna_nvdb
   
   
 
