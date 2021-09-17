@@ -1,12 +1,13 @@
 library(microbenchmark)
-nodes_utbud <- unique(sf_utbud_nvdb %>% 
-  filter(tolower(VårdtypGrupp) %like% "Somatik akut") %>%
-  pull(nodeId))
 
+#nodes_utbud <- unique(sf_utbud_nvdb %>% 
+#  filter(tolower(VårdtypGrupp) %like% "Somatik akut") %>%
+#  pull(nodeId))
 
-
-
+#?distances
+#sf_utbud_nvdb %>% pull(utbudNamn)
 ############################### Beräkna för hela Dalarna ###################################################
+dist_dalarna_nvdb <- NULL
 mbm_dist_dalarna_nvdb = microbenchmark(
   dist_dalarna_nvdb <- sf_utbud_nvdb %>%
     #filter(VårdtypGrupp == "Somatik akut" | VårdtypGrupp == "Primärvård")  %>%
@@ -16,30 +17,49 @@ mbm_dist_dalarna_nvdb = microbenchmark(
     group_by(utbudNodeId, utbudX, utbudY) %>%
     summarise() %>%
     mutate(net = map(.x = utbudNodeId, .f = function(utbudNodeId){
-      distanceNodes <- net_vägnät_nvdb %>%
+      resvägOchRestid <- net_vägnät_nvdb %>%
         activate("nodes") %>%
         left_join(
-          t(distances(graph = net_vägnät_nvdb, v = utbudNodeId, mode = "all")) %>%
+          t(distances(graph = net_vägnät_nvdb_sträcka, v = utbudNodeId, mode = "all")) %>% # beräkna resväg
             as_tibble() %>%
-            rename("distance" = "V1") %>%
-            mutate("distanceKm" = distance / 1000) %>%
+            rename("distans" = "V1") %>%
+            mutate("distansKm" = distans / 1000) %>%
             rownames_to_column("nodeId") %>%
             mutate(nodeId = as.integer(nodeId)) %>%
-            select(nodeId, distance, distanceKm),
+            select(nodeId, distans, distansKm),
+          by=c("nodeId" = "nodeId")
+        )%>%
+        left_join(
+          t(distances(graph = net_vägnät_nvdb, v = utbudNodeId, mode = "all")) %>% # beräkna restid
+            as_tibble() %>%
+            rename("restid_minuter" = "V1") %>%
+            rownames_to_column("nodeId") %>%
+            mutate(nodeId = as.integer(nodeId)) %>%
+            select(nodeId, restid_minuter),
           by=c("nodeId" = "nodeId")
         )
-      distanceNodes %>%
+      resvägOchRestid %>%
         activate("edges") %>%
         left_join(
-          st_as_sf(distanceNodes, "edges") %>% 
+          st_as_sf(resvägOchRestid, "edges") %>% 
             as.data.table() %>%
             select(from, to, sf_edge_id)  %>%
-            inner_join(st_as_sf(distanceNodes, "nodes") %>% as.data.table() %>% select(nodeId, distance) %>% rename(distance.Node1 = distance), by=c("from"="nodeId")) %>%
-            inner_join(st_as_sf(distanceNodes, "nodes") %>% as.data.table() %>% select(nodeId, distance) %>% rename(distance.Node2 = distance), by=c("to"="nodeId")) %>%
+            inner_join(st_as_sf(resvägOchRestid, "nodes") %>% as.data.table() %>% select(nodeId, distans) %>% rename(distans.Nod1 = distans), by=c("from"="nodeId")) %>%
+            inner_join(st_as_sf(resvägOchRestid, "nodes") %>% as.data.table() %>% select(nodeId, distans) %>% rename(distans.Nod2 = distans), by=c("to"="nodeId")) %>%
             rowwise() %>%
-            mutate(distance.NodeMax = max(distance.Node1, distance.Node2)) %>%
-            mutate(distance.NodeMaxKm = distance.NodeMax / 1000) %>%
-            select(sf_edge_id, distance.NodeMax, distance.NodeMaxKm)
+            mutate(distans.NodMax = max(distans.Nod1, distans.Nod2)) %>%
+            mutate(distans.NodMaxKm = distans.NodMax / 1000) %>%
+            select(sf_edge_id, distans.NodMax, distans.NodMaxKm)
+          ,by=c("sf_edge_id"="sf_edge_id")) %>%
+        left_join(
+          st_as_sf(resvägOchRestid, "edges") %>% 
+            as.data.table() %>%
+            select(from, to, sf_edge_id)  %>%
+            inner_join(st_as_sf(resvägOchRestid, "nodes") %>% as.data.table() %>% select(nodeId, restid_minuter) %>% rename(restid_minuter.Nod1 = restid_minuter), by=c("from"="nodeId")) %>%
+            inner_join(st_as_sf(resvägOchRestid, "nodes") %>% as.data.table() %>% select(nodeId, restid_minuter) %>% rename(restid_minuter.Nod2 = restid_minuter), by=c("to"="nodeId")) %>%
+            rowwise() %>%
+            mutate(restid_minuter.NodMax = max(restid_minuter.Nod1, restid_minuter.Nod2)) %>%
+            select(sf_edge_id, restid_minuter.NodMax)
           ,by=c("sf_edge_id"="sf_edge_id"))
       })) %>%
     left_join(sf_utbud_nvdb %>% select(Populärnamn, VårdtypGrupp, utbudNamn, nodeId) #%>% filter(VårdtypGrupp == "Somatik akut" | VårdtypGrupp == "Primärvård")
@@ -53,19 +73,28 @@ mbm_dist_dalarna_nvdb = microbenchmark(
 
 # plotta utbudspunkt i Dalarna
 
-net <- (dist_dalarna_nvdb %>% pull(net))[[1]]
+net <- (dist_dalarna_nvdb %>% filter(tolower(Populärnamn) %like% "falu lasarett") %>% pull(net))[[1]]
 
-p <- ggplot()+
+p1 <- ggplot()+
   geom_sf(data = sf_kommuner_dalarna, color = "grey", linetype="dashed")+
-  geom_sf(data = st_as_sf(net, "edges"), aes(color=distance.NodeMaxKm))+
+  geom_sf(data = st_as_sf(net, "edges"), aes(color=distans.NodMax))+
   theme_minimal()+
   theme(axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank())+
   theme(axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank())+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   scale_color_gradientn(colours=magma(20, begin=1, end=0),name="Distans (km)",na.value = "green") 
 
+p2 <- ggplot()+
+  geom_sf(data = sf_kommuner_dalarna, color = "grey", linetype="dashed")+
+  geom_sf(data = st_as_sf(net, "edges"), aes(color=restid_minuter.NodMax))+
+  theme_minimal()+
+  theme(axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank())+
+  theme(axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank())+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  scale_color_gradientn(colours=magma(20, begin=1, end=0),name="Distans (km)",na.value = "green")
 
 
+grid.arrange(p1,p2)
 ############################################################################################################
 ############################################################################################################
 

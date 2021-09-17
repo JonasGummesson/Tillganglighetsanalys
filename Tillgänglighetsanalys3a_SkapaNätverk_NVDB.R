@@ -1,4 +1,4 @@
-############################ Skapa nätverk ##############################
+############################ Skapa nätverk NVDB ##############################
 # skapar nätverk av vägnät samt kopplar ihop med utbudsdata
 
 ############## Data från lantmäteriet ################
@@ -19,23 +19,29 @@ net_vägnät_nvdb_falun <- net_vägnät_nvdb_falun %>%
   inner_join(st_as_sf(net_vägnät_nvdb_falun, "nodes") %>% as.data.table(), by=c("to"="nodeId"), suffix=c("", ".node1"))%>%
   inner_join(st_as_sf(net_vägnät_nvdb_falun, "nodes") %>% as.data.table(), by=c("from"="nodeId"), suffix=c("", ".node2"))
 
-#lm dalarna
+#hela dalarna
 net_vägnät_nvdb  <- as_sfnetwork(sf_vägnät_nvdb, directed = FALSE) %>%
   activate("nodes") %>%
   mutate(nodeId = row_number()) %>%
   mutate(xNode = st_coordinates(geometry)[,1], yNode = st_coordinates(geometry)[,2])%>%
   activate("edges") %>%
-  mutate(weight = edge_length()) 
+  mutate(sträcka_m =  edge_length()) %>%
+  mutate(hastighet_m_per_minut = (HTHAST*1000/60)) %>%
+  mutate(tid_m = sträcka_m/hastighet_m_per_minut) %>%
+  mutate(weight =tid_m)  %>%
+  select(sf_edge_id, from, to, HTHAST, sträcka_m, hastighet_m_per_minut, tid_m, weight)
 
-
-
-p1 <- ggplot(sf_vägnät_lm_falun)+geom_sf()
+net_vägnät_nvdb_sträcka <- net_vägnät_nvdb %>%
+  activate("edges") %>%
+  mutate(weight = sträcka_m)
+         
+p1 <- ggplot(sf_vägnät_nvdb_falun)+geom_sf()
 
 p2 <- ggplot()+
-  geom_sf(data = st_as_sf(net_vägnät_lm_falun, "nodes"), color=  "darkblue")+
-  geom_sf(data = st_as_sf(net_vägnät_lm_falun, "edges"), color = "red", alpha=0.5)
+  geom_sf(data = st_as_sf(net_vägnät_nvdb_falun, "nodes"), color=  "darkblue")+
+  geom_sf(data = st_as_sf(net_vägnät_nvdb_falun, "edges"), color = "red", alpha=0.5)
 
-ggmap(map_Falun)+
+p <- ggmap(map_Falun)+
   geom_sf(data = st_as_sf(net_vägnät_nvdb_falun, "nodes"), color=  "darkblue", inherit.aes = FALSE)+
   geom_sf(data = st_as_sf(net_vägnät_nvdb_falun, "edges"), color = "red", alpha=0.5,  inherit.aes = FALSE)
 
@@ -51,8 +57,8 @@ p <- ggplot()+
 
 ############## Data från NVDB ################
 
-# nvdb utan att splitta
-net_vägnät_nvdb_falun  <- as_sfnetwork(sf_vägnät_nvdb_falun, directed = FALSE)
+
+#net_vägnät_nvdb_falun  <- as_sfnetwork(sf_vägnät_nvdb_falun, directed = FALSE)
 
 nodes_vägnät_nvdb_falun = as_sfnetwork(sf_vägnät_nvdb_falun) %>%
   activate("nodes") %>%
@@ -68,12 +74,13 @@ net_vägnät_nvdb_falun_lines  <- sfnetwork(nodes = nodes_vägnät_nvdb_falun, edges
 # ojojoj, stora problem här!
 p <- ggplot()+
   geom_sf(data = st_as_sf(net_vägnät_nvdb_falun, "edges") %>% mutate(name = paste0(from, "-", to)), aes(color=name), linetype="dashed")+
-  geom_sf(data = st_as_sf(net_vägnät_nvdb_falun, "nodes"))+
-  geom_sf(data = st_as_sf(net_vägnät_nvdb_falun_lines, "edges"), color = "red")
+  geom_sf(data = st_as_sf(net_vägnät_nvdb_falun, "nodes"), size=1)+
+  geom_sf(data = st_as_sf(net_vägnät_nvdb_falun_lines, "edges"), color = "red")+
+  theme(legend.position = "None")
 
 # kolla slaskfil för ytterligare kod för att splitta bågar etc!
 
-################### identifiera utbudspunkter vdbn #################################
+################### identifiera utbudspunkter nvdb #################################
 
 utbud_noder <- sf_utbud %>% 
   mutate(x =  st_coordinates(geometry)[,1], y =  st_coordinates(geometry)[,2]) %>%

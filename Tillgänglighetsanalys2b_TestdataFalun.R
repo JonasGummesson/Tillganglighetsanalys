@@ -15,7 +15,7 @@ sf_vägnät_lm_falun <- sf_vägnät_lm %>%
   select(sf_edge_id, xEdge, yEdge, geometry)
 
 # mindre buffer för NVDB <- fler mindre vägar
-sf_buffer <- st_as_sf(st_buffer(sfc, 5000))
+sf_buffer <- st_as_sf(st_buffer(sfc, 1000))
 sf_vägnät_nvdb_falun <- sf_vägnät_nvdb %>% 
   st_join(sf_buffer, left=FALSE) %>%
   filter(HTHAST >= 30) %>%
