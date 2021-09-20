@@ -6,6 +6,9 @@ source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys1b_Utbud.R")
 # läs in adresser och koordinater för folkbokförda i Dalarna
 source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys1c_Vårdtagare.R")
 
+source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys1d_Vårdkonsumtion.R")
+
+
 ########################### förbereda vägnät för nätverksanalys ####################
 # förbereda vägnätsobjekt
 source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys2a_FörberedaVägnät.R")
@@ -33,9 +36,9 @@ source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys5_Utbudsanalys_NVDB.
 
 
 ########################### beräkna kontinuerlig distans mellan utbud och individer ####################
-source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys6_IndividTillUtbud.R")
+source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys6_IndividTillUtbud_NVDB.R")
 
 
 
 ########################### kör regressioner på utbud och avstånd ####################
-source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys7_Regressioner.R")
+source("~/GitHub/Tillganglighetsanalys/Tillgänglighetsanalys7_Regressioner_NVDB.R")

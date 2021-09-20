@@ -89,12 +89,10 @@ st_as_sf(net_vägnät_nvdb, "edges") %>%
 times = 1)
 
 
+
 p <- ggplot()+
-  geom_sf(data = st_as_sf(net_vägnät_nvdb, "edges") %>% inner_join(dist_vårdtypgrupp_edges, by=c("sf_edge_id"="sf_edge_id")), aes(color=distance.nodeMaxKm))+
+  geom_sf(data = st_as_sf(net_vägnät_nvdb, "edges") %>% inner_join(dist_vårdtypgrupp_edges %>% filter(VårdtypGrupp != "AmbulansSatellitstation"), by=c("sf_edge_id"="sf_edge_id")), aes(color=distance.nodeMaxKm))+
   facet_wrap(~VårdtypGrupp)+
-  #geom_sf(data = st_as_sf(net, "nodes") %>% select(nodeId) %>% inner_join(dist_vårdtypgrupp %>% mutate(distanceKm = distance/1000), by=c("nodeId"="nodeId")), aes(color=distance), size=2)+
-  # geom_text_repel(data = st_as_sf(net_falun_lm, "edges"), aes(label = paste0(to, "-", from), x = xEdge, y = yEdge), color = "blue", size=4)  +
-  # geom_sf(data =   dist_dalarna_lm %>% head(1), aes(x=utbudX, y=utbudY), color="purple", size=5)+
   theme_minimal()+
   theme(axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank())+
   theme(axis.title.y=element_blank(),axis.text.y=element_blank(),axis.ticks.y=element_blank())+

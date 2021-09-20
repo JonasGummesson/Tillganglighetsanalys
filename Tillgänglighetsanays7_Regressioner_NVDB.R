@@ -33,6 +33,10 @@ summary(fit.AkutSV)
 #summary(fit.ElektivSV)
 
 
+modelformula_AkutSV <- as.formula("log(Akut_SV) ~ log(RestidTillSomatiskAkut)")
+fit.AkutSV <- lm(modelformula_AkutSV, data = sf_individer_nvdb_dist_besök %>%  filter(Akut_SV != 0 & RestidTillSomatiskAkut != 0))
+summary(fit.AkutSV)
+
 sf_individer_nvdb_dist_besök %>%
   select(Akut_SV, DistansTillSomatiskAkutKm) %>%
   mutate(DistansTillSomatiskAkutKm = round(DistansTillSomatiskAkutKm,0)) %>%

@@ -1,4 +1,4 @@
-
+# OBS! utgår, har fixat det med QGIS istället!
 
 # lm enbart falun
 net_vägnät_nvdb_test  <- as_sfnetwork(sf_vägnät_nvdb, directed = FALSE) %>%
