@@ -85,5 +85,5 @@ sf_vägnät_nvdb <- st_read(dsn = "E:/Filer/admgumjon/Vägkartor/NVDB_Hastighet/Fix
   st_set_crs(3006)
 
 
-p <- ggplot(sf_vägnät_nvdb_cleaned)+geom_sf()
+p <- ggplot(sf_vägnät_nvdb)+geom_sf()
 
