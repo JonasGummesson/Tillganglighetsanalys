@@ -1,5 +1,7 @@
 library(microbenchmark)
 
+library(DBI)
+
 #nodes_utbud <- unique(sf_utbud_nvdb %>% 
 #  filter(tolower(VårdtypGrupp) %like% "Somatik akut") %>%
 #  pull(nodeId))
@@ -68,7 +70,8 @@ mbm_dist_dalarna_nvdb = microbenchmark(
 #mbm_dist_dalarna_nvdb
   
   
-
+nrow(dist_dalarna_nvdb)
+#dbWriteTable(con_Sandbox, name = Id(schema = "dbo", table = "Vägnät_NVDB_AvståndTillUtbud"), value = dist_dalarna_nvdb, overwrite=TRUE)
 
 
 # plotta utbudspunkt i Dalarna

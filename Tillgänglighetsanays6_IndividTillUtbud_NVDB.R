@@ -99,11 +99,8 @@ cl <- makeCluster(14) #not to overload your computer
 registerDoParallel(cl)
 dt_individer_test <- dt_individer %>% mutate(closestNodeId = as.integer(NA))
 mbm_parallel = microbenchmark(
-finalMatrix <- foreach(i=1:5000, .combine=rbind) %dopar% {
-  library(tidyr)
-  library(dplyr)
-  library(data.table)
-     xIndivid <- dt_individer[i, "xIndivid"] %>% pull(xIndivid)
+finalMatrix <- foreach(i=1:5000, .combine=rbind, .packages=c('tidyr','dplyr','data.table')) %dopar% {
+  xIndivid <- dt_individer[i, "xIndivid"] %>% pull(xIndivid)
   yIndivid <- dt_individer[i, "yIndivid"] %>% pull(yIndivid)
 
   closestNodeId <-

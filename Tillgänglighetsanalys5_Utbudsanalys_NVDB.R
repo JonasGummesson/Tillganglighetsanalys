@@ -2,8 +2,9 @@
 # sf_isokroner
 # sf_individer
 
-
+#install.packages("data.table")
 library(microbenchmark)
+#library(data.table)
 ### beräkna andelar per kommun och intervall
 
 mbm <- microbenchmark(
@@ -65,6 +66,23 @@ dist_dalarna_nvdb %>%
   summarise(distans = min(distans),
             resväg_minuter = min(restid_minuter)),
 times = 1)
+?fwrite
+fwrite(dist_vårdtypgrupp_nodes %>% 
+         as.data.table() %>% 
+         mutate(distans = replace(distans, is.infinite(distans), NA),
+                resväg_minuter = replace(resväg_minuter, is.infinite(resväg_minuter), NA)),
+       "E:/Filer/admgumjon/temp_dist_vårdtypgrupp_nodes.csv")
+#fread("link.csv", encode = "UTF-8")
+
+
+install.packages("DBI")
+#mbm_dist_vårdtypgrupp_nodes
+dbWriteTable(con_Sandbox, name = "Vagnat_NVDB_Distans_Utbud_nodes", 
+             value = dist_vårdtypgrupp_nodes %>% 
+               as.data.table() %>% 
+               mutate(distans = replace(distans, is.infinite(distans), NA),
+                      resväg_minuter = replace(resväg_minuter, is.infinite(resväg_minuter), NA)), overwrite=TRUE)
+
 
 mbm_dist_vårdtypgrupp_edges = microbenchmark(
 {
@@ -75,20 +93,21 @@ st_as_sf(net_vägnät_nvdb, "edges") %>%
   select(VårdtypGrupp, from, to, sf_edge_id) %>%
   inner_join(dist_vårdtypgrupp_nodes %>% ungroup() %>% select(nodeId, distans, resväg_minuter, VårdtypGrupp), by=c("from"="nodeId", "VårdtypGrupp" = "VårdtypGrupp")) %>%
   rename("distans.nod1" = "distans",
-         "restid_minuter.nod1" = "restid_minuter") %>%
+         "restid_minuter.nod1" = "resväg_minuter") %>%
   inner_join(dist_vårdtypgrupp_nodes %>% ungroup() %>% select(nodeId, distans, resväg_minuter, VårdtypGrupp), by=c("to"="nodeId", "VårdtypGrupp" = "VårdtypGrupp")) %>%
   rename("distans.nod2" = "distans",
-         "restid_minuter.nod2" = "restid_minuter")) %>%
+         "restid_minuter.nod2" = "resväg_minuter") %>%
   rowwise()%>%
   mutate(distans.nodMax = max(distans.nod1, distans.nod2),
          distans.nodMean = mean(distans.nod1, distans.nod2),
          restid_minuter.nodMax = max(restid_minuter.nod1, restid_minuter.nod2)) %>%
-  mutate(distans.nodMaxKm = distans.nodeMax/1000,
-         distans.nodMeanKm = distans.nodeMean/1000)
+  mutate(distans.nodMaxKm = distans.nodMax/1000,
+         distans.nodMeanKm = distans.nodMean/1000)
 },
 times = 1)
 
 
+dbWriteTable(con_Sandbox, name =  "Vagnat_NVDB_Distans_Utbud_edges", value = dist_vårdtypgrupp_edges, overwrite=TRUE)
 
 p <- ggplot()+
   geom_sf(data = st_as_sf(net_vägnät_nvdb, "edges") %>% inner_join(dist_vårdtypgrupp_edges %>% filter(VårdtypGrupp != "AmbulansSatellitstation"), by=c("sf_edge_id"="sf_edge_id")), aes(color=distance.nodeMaxKm))+

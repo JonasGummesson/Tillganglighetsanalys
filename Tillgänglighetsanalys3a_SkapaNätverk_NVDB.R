@@ -3,6 +3,13 @@
 
 ############## Data från lantmäteriet ################
 
+
+con_Sandbox <- DBI::dbConnect(odbc::odbc(),
+                      Driver = "SQL Server",
+                      Server = "WFALMITSR036",
+                      Database = "Sandbox_Jonas",
+                      Trusted_Connection = "True")
+
 # nvdb enbart falun
 net_vägnät_nvdb_falun  <- as_sfnetwork(sf_vägnät_nvdb_falun, directed = FALSE) %>%
   activate("nodes") %>%
@@ -30,6 +37,15 @@ net_vägnät_nvdb  <- as_sfnetwork(sf_vägnät_nvdb, directed = FALSE) %>%
   mutate(tid_m = sträcka_m/hastighet_m_per_minut) %>%
   mutate(weight =tid_m)  %>%
   select(sf_edge_id, from, to, HTHAST, sträcka_m, hastighet_m_per_minut, tid_m, weight)
+
+#dt <- as.data.table(adress_with_deso) %>% 
+  #mutate_if(is.character, function(x) { iconv(x,  "UTF-8", "latin1")}) %>%
+  #mutate(TimestampCreated = Sys.time())
+
+#?dbWriteTable
+dbWriteTable(con_Sandbox, name = "Vagnat_NVDB_nodes", value = net_vägnät_nvdb %>% st_as_sf("nodes") %>% as.data.table(), overwrite=TRUE)
+dbWriteTable(con_Sandbox, name =  "Vagnat_NVDB_edges", value = net_vägnät_nvdb %>% st_as_sf("edges") %>% as.data.table(), overwrite=TRUE)
+
 
 net_vägnät_nvdb_sträcka <- net_vägnät_nvdb %>%
   activate("edges") %>%
