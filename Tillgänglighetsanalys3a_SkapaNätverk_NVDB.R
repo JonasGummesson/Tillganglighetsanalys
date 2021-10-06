@@ -1,3 +1,4 @@
+library(DBI)
 ############################ Skapa nätverk NVDB ##############################
 # skapar nätverk av vägnät samt kopplar ihop med utbudsdata
 
@@ -38,13 +39,9 @@ net_vägnät_nvdb  <- as_sfnetwork(sf_vägnät_nvdb, directed = FALSE) %>%
   mutate(weight =tid_m)  %>%
   select(sf_edge_id, from, to, HTHAST, sträcka_m, hastighet_m_per_minut, tid_m, weight)
 
-#dt <- as.data.table(adress_with_deso) %>% 
-  #mutate_if(is.character, function(x) { iconv(x,  "UTF-8", "latin1")}) %>%
-  #mutate(TimestampCreated = Sys.time())
 
-#?dbWriteTable
-dbWriteTable(con_Sandbox, name = "Vagnat_NVDB_nodes", value = net_vägnät_nvdb %>% st_as_sf("nodes") %>% as.data.table(), overwrite=TRUE)
-dbWriteTable(con_Sandbox, name =  "Vagnat_NVDB_edges", value = net_vägnät_nvdb %>% st_as_sf("edges") %>% as.data.table(), overwrite=TRUE)
+dbWriteTable(con_Sandbox, name = "Vagnat_NVDB_nodes", value = net_vägnät_nvdb %>% st_as_sf("nodes") %>% as.data.table() %>% mutate(test = sf::st_as_text(geometry)), overwrite=TRUE)
+dbWriteTable(con_Sandbox, name =  "Vagnat_NVDB_edges", value = net_vägnät_nvdb %>% st_as_sf("edges")  %>% as.data.table() %>% mutate(test = sf::st_as_text(geometry)), overwrite=TRUE)
 
 
 net_vägnät_nvdb_sträcka <- net_vägnät_nvdb %>%

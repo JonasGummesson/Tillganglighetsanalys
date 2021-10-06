@@ -75,13 +75,22 @@ fwrite(dist_vårdtypgrupp_nodes %>%
 #fread("link.csv", encode = "UTF-8")
 
 
-install.packages("DBI")
+#install.packages("DBI")
 #mbm_dist_vårdtypgrupp_nodes
+
+# make compatible with sql server
+dt_dist_vårdtypgrupp_nodes <- dist_vårdtypgrupp_nodes %>%
+  as.data.table() %>% 
+  mutate(distans = replace(distans, is.infinite(distans), NA),
+         resväg_minuter = replace(resväg_minuter, is.infinite(resväg_minuter), NA))
+names(dt_dist_vårdtypgrupp_nodes) <- iconv(names(dt_dist_vårdtypgrupp_nodes), from="UTF-8", to = "latin1")
+
 dbWriteTable(con_Sandbox, name = "Vagnat_NVDB_Distans_Utbud_nodes", 
-             value = dist_vårdtypgrupp_nodes %>% 
-               as.data.table() %>% 
-               mutate(distans = replace(distans, is.infinite(distans), NA),
-                      resväg_minuter = replace(resväg_minuter, is.infinite(resväg_minuter), NA)), overwrite=TRUE)
+             value = dt_dist_vårdtypgrupp_nodes, overwrite=TRUE, field.types = c(VårdtypGrupp = "NVARCHAR(256)"))
+
+#fwrite(dist_vårdtypgrupp_nodes, file = "E:/filer/admgumjon/testutf8.csv", encoding="UTF-8")
+#dist_vårdtypgrupp_nodes2 <- fread(file = "E:/filer/admgumjon/testutf8.csv", encoding = 'UTF-8')
+
 
 
 mbm_dist_vårdtypgrupp_edges = microbenchmark(
@@ -106,8 +115,15 @@ st_as_sf(net_vägnät_nvdb, "edges") %>%
 },
 times = 1)
 
+# make compatible with SQL Server
+dt_dist_vårdtypgrupp_edges <- dist_vårdtypgrupp_edges %>%
+  as.data.table() %>% 
+  mutate(across(where(is.numeric), ~ replace(.x, is.infinite(.x), NA)))
+names(dt_dist_vårdtypgrupp_edges) <- iconv(names(dt_dist_vårdtypgrupp_edges), from="UTF-8", to = "latin1")
+# save to SQL Server
+dbWriteTable(con_Sandbox, name = "Vagnat_NVDB_Distans_Utbud_edges", 
+             value = dt_dist_vårdtypgrupp_edges, overwrite=TRUE, field.types = c(VårdtypGrupp = "NVARCHAR(256)"))
 
-dbWriteTable(con_Sandbox, name =  "Vagnat_NVDB_Distans_Utbud_edges", value = dist_vårdtypgrupp_edges, overwrite=TRUE)
 
 p <- ggplot()+
   geom_sf(data = st_as_sf(net_vägnät_nvdb, "edges") %>% inner_join(dist_vårdtypgrupp_edges %>% filter(VårdtypGrupp != "AmbulansSatellitstation"), by=c("sf_edge_id"="sf_edge_id")), aes(color=distance.nodeMaxKm))+
